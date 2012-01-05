@@ -5,9 +5,16 @@ BITS 64
 
 section .text
 
-global start
+global mystart
 
-start:
+mystart:
+	mov rax, 0x2000004
+	mov rdi, 1
+	mov rsi, qword booting
+	mov rdx, 17
+	syscall
+
+open:
 	mov rax, 0x2000005	; open
 	mov rdi, qword image	; "image"
 	mov rsi, 0x2		; RDWR
@@ -30,15 +37,41 @@ mmap:
 	mov rdx, 0x7		; READ|WRITE|EXEC
 	mov rcx, 0x11		; SHARED|FILE|FIXED
 	; mov r8, fd
-	xor r9,0		; offset 0
+	mov r9,0		; offset 0
 	syscall
 
 boot:
-	mov rax,0x900000000
-	jmp rax
+	mov rdi, 0x900000000
+	cmp rax,rdi
+	jne fail
+	
+	jmp works
+
+fail:
+	mov rax, 0x2000004
+	mov rdi, 2
+	mov rsi, qword error
+	mov rdx, 13
+	syscall
+	jmp exit
+
+works:
+	mov rax, 0x2000004
+	mov rdi, 2
+	mov rsi, qword worked
+	mov rdx, 10
+	syscall
+
+exit:
+	mov rax, 0x2000001
+	mov edi, 0
+	syscall
+	
+section .data
 
 image: db "image", 0,0,0
-
-section .data
+error: db "did not work",0xa,0
+worked: db "it worked", 0xa,0
+booting: db "booting firth...", 0xa
 
 stats: dd 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
