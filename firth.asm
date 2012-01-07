@@ -3,7 +3,7 @@
 
 BITS 64
 
-section .text
+section .text		; starts 0x100000000
 
 global mystart
 
@@ -27,9 +27,8 @@ find_size:
 	mov rdi, r15		; file descriptor
 	mov rsi, qword stats	; buffer address
 	syscall
-	mov r13, 0x100001088
-	mov r14, [r13] ; save image size
-	jmp $
+	mov r13, qword size	; size of image file
+	mov r14, [r13]		; save image size
 
 map_image:
 	mov rax, 0x20000c5	; mmap
@@ -63,12 +62,18 @@ works:
 	syscall
 	jmp r13			; jump to image
 
-section .data
+section .data			; 0x100001000
 
-error: db "failed to load image!",0xa
-worked: db "loading image...", 0xa
+error:	db "failed to load image!",0xa
+worked:	db "loading image...", 0xa
 booting: db "booting firth...", 0xa
-image: db "image", 0,90,90
-stats: dq 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-done: db "done"
+image:	db "image", 0,90,90
+stats:	dq 0,0,					; starts at 0x40 from start of data segment
+	dq 0,0,
+	dq 0,0,
+	dq 0,0,
+	dq 0
+size:	dq 0,					; 0x100001088
+	dq 0,0,0,0,0,0,0,0,0,0,0,0,0		; 
+done:	db "done"
 
