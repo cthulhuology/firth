@@ -20,19 +20,20 @@ mystart:
 	syscall
 	mov r8, rax		; fd
 	mov r15, rax		; fd copy
+	mov r14, 64
 
 	mov rax, 0x20000c5	; mmap
 	mov rdi, 0x100003000	; addr
-	mov rsi, 64		; file size
+	mov rsi, r14		; file size
 	mov rdx, 0x7		; READ0x1|WRITE0x2|EXEC0x4
 	mov rcx, 0x111		; NO_EXTEND0x100|SHARED0x01|FILE0x00| 0x10 FIXED 0x111 (1802 ANON JIT PRIVATE)
 	; mov r8, fd
 	mov r9,0		; offset 0
 	syscall
-	mov r14,rax		; image address
+	mov r13,rax		; image address
 
 boot:
-	test r14,r14
+	test r13,r13		; test image mmap result (0 means we failed)
 	jnz works
 
 fail:
@@ -50,7 +51,7 @@ works:
 	mov rsi, qword worked
 	mov rdx, 17
 	syscall
-	jmp r14			; jump to image
+	jmp r13			; jump to image
 
 section .data
 
