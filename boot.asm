@@ -3,7 +3,7 @@ ORG 0x800000000
 BITS 64
 
 mov rax, 0x2000005	; open
-mov rdi, qword mmap	; "mmap"
+mov rdi, qword image	; "image"
 mov rsi, 0x2		; RDWR
 syscall
 mov r8, rax		; fd
@@ -17,6 +17,14 @@ mov rcx, 0x11		; SHARED|FILE|FIXED
 mov r9,0		; offset 0
 syscall
 
-jmp rax 		; jump to address 0x90000000
+mov rax, 0x2000004	; write
+mov rdi, 2		; stderr
+mov rsi, qword worked	; worked
+mov rdx, 13 		; 13 bytes
+syscall
 
-mmap: db "mmap", 0
+mov rax,0x900000000	; address
+jmp rax			; invoke
+
+image: db "image", 0
+worked: db "loaded image", 0xa, 0

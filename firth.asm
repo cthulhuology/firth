@@ -14,64 +14,48 @@ mystart:
 	mov rdx, 17
 	syscall
 
-open:
 	mov rax, 0x2000005	; open
 	mov rdi, qword image	; "image"
 	mov rsi, 0x2		; RDWR
 	syscall
 	mov r8, rax		; fd
+	mov r15, rax		; fd copy
 
-stat:
-;	mov rax, 0x20000bd	; fstat
-;	mov rdi, r8		; fd
-;	mov rsi, qword stats		; address of stats array, st_size is at stats + 96 bytes
-;	syscall
-	
-;	mov rsi, qword [rsi+96]	; st_size	
-	
-mmap:
 	mov rax, 0x20000c5	; mmap
-	mov rdi, 0x900000000	; addr
-	; mov rsi, st_size
-	mov rsi, 80
-	mov rdx, 0x7		; READ|WRITE|EXEC
-	mov rcx, 0x11		; SHARED|FILE|FIXED
+	mov rdi, 0x100003000	; addr
+	mov rsi, 64		; file size
+	mov rdx, 0x7		; READ0x1|WRITE0x2|EXEC0x4
+	mov rcx, 0x111		; NO_EXTEND0x100|SHARED0x01|FILE0x00| 0x10 FIXED 0x111 (1802 ANON JIT PRIVATE)
 	; mov r8, fd
 	mov r9,0		; offset 0
 	syscall
+	mov r14,rax		; image address
 
 boot:
-	mov rdi, 0x900000000
-	cmp rax,rdi
-	jne fail
-	
-	jmp works
+	test r14,r14
+	jnz works
 
 fail:
-	mov rax, 0x2000004
-	mov rdi, 2
-	mov rsi, qword error
-	mov rdx, 13
+	mov rax, 0x2000004	; write
+	mov rdi, 2		; stderr
+	mov rsi, qword error	; 
+	mov rdx, 22
 	syscall
-	jmp exit
+	mov rax, 0x2000001	; exit
+	syscall
 
 works:
 	mov rax, 0x2000004
 	mov rdi, 2
 	mov rsi, qword worked
-	mov rdx, 10
+	mov rdx, 17
 	syscall
+	jmp r14			; jump to image
 
-exit:
-	mov rax, 0x2000001
-	mov edi, 0
-	syscall
-	
 section .data
 
-image: db "image", 0,0,0
-error: db "did not work",0xa,0
-worked: db "it worked", 0xa,0
+error: db "failed to load image!",0xa
+worked: db "loading image...", 0xa
 booting: db "booting firth...", 0xa
+image: db "image", 0
 
-stats: dd 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
