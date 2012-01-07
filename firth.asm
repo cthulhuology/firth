@@ -14,14 +14,24 @@ mystart:
 	mov rdx, 17
 	syscall
 
+open_image:
 	mov rax, 0x2000005	; open
 	mov rdi, qword image	; "image"
 	mov rsi, 0x2		; RDWR
 	syscall
 	mov r8, rax		; fd
 	mov r15, rax		; fd copy
-	mov r14, 64
 
+find_size:
+	mov rax, 0x20000bd	; fstat
+	mov rdi, r15		; file descriptor
+	mov rsi, qword stats	; buffer address
+	syscall
+	mov r13, 0x100001088
+	mov r14, [r13] ; save image size
+	jmp $
+
+map_image:
 	mov rax, 0x20000c5	; mmap
 	mov rdi, 0x100003000	; addr
 	mov rsi, r14		; file size
@@ -58,5 +68,7 @@ section .data
 error: db "failed to load image!",0xa
 worked: db "loading image...", 0xa
 booting: db "booting firth...", 0xa
-image: db "image", 0
+image: db "image", 0,90,90
+stats: dq 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+done: db "done"
 

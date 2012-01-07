@@ -1,7 +1,11 @@
 all : firth image
 
-image : image.asm
-	yasm -f bin -o image image.asm
+image.bin : image.asm
+	yasm -f bin -o image.bin image.asm
+
+image : image.bin
+	dd if=/dev/zero of=image bs=1048576 count=1
+	dd if=image.bin of=image conv=notrunc count=1
 
 firth.o : firth.asm 
 	yasm -f macho64 firth.asm
@@ -11,4 +15,4 @@ firth : firth.o
 
 .PHONY: clean
 clean:
-	rm firth image *.o
+	rm firth image *.o *.bin
