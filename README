@@ -1,0 +1,13 @@
+Firth loader and VM image
+
+To build:
+
+make
+
+To run:
+
+./firth
+
+
+
+
