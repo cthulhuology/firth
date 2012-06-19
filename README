@@ -1,13 +1,50 @@
-Firth loader and VM image
+Firth
+-----
+
+Firth is an experimental evolution of Forth geared around the following concepts:
+
+	* 2 stack w/ registers architecture on a modern 64bit x86_64 CPU
+	* direct low level system interface, not requiring any C code
+	* object oriented memory usage with message passing via registers
+	* one process per object threaded model
+	* message passing as flow control
+	* one concurrent process per processor core (vcpu)
+	* just in time compilation for everything (no interpreter)
+	* prototypal inheritance with deep copy semantics
+	* virtual machine as the base object
+	* persistent system images
+
+The goal of Firth is to build a modern Forth that adopts a Erlang meets Self
+process/object model.  While initially targeting 64bit x86_64, it should be
+retargetable with minimal effort to other processors, such as ARM.  
+
+
+Building
+--------
 
 To build:
 
-make
+	make
+
+This will produce a firth binary and a image file.
+
+
+Running
+-------
 
 To run:
 
-./firth
+./f
+
+This will run firth on the image file in a raw tty.
 
 
+Contributing
+------------
 
+Firth is being released under a BSD 3-clause license.  See the COPYING file for details.  If you would like to contribute back to Firth,
+feel free to send an email to dave at dloh.org
+
+FIN
+---
 
