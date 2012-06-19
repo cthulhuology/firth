@@ -3,10 +3,10 @@ all : firth image syscall.asm
 syscall.asm :  /usr/include/sys/syscall.h
 	cat /usr/include/sys/syscall.h | grep -v "old " | grep "^#define" | sed 's%#define%\%define%' | sed 's%SYS_%%' | sed 's%$$% + 0x2000000%'   | tail -n +3 > syscall.asm
 
-image.bin : image.asm syscall.asm
+image.bin : image.asm syscall.asm vm.asm
 	yasm -f bin -o image.bin image.asm
 
-image : image.bin
+image : image.bin 
 	dd if=/dev/zero of=image bs=1048576 count=1
 	dd if=image.bin of=image bs=1048576 conv=notrunc count=1
 

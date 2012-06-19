@@ -21,37 +21,23 @@ ORG 0
 ; Initialize VM
 vm
 
-;; Test code
+show_cafebabe:
+	literal 0xcafebabe
+	emit
+	sp
 
-literal 16
-offset running
-print
+show_zero:
+	literal 0
+	emit
+	eol
 
-literal 4
-literal 2
-addition
-
-literal 48
-addition
-offset number
-storec
-
-literal 3
-offset number
-print
-
-literal 6
-offset done
-print 
-
+done
 quit
 
 
 ;; Data Section
 
 running: db "running image!", 0xa, 0xd
-number: db "0", 0xa,0xd
-done: db "done",0xa,0xd
 
 ; Data stack 8
 

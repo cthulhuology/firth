@@ -5,10 +5,49 @@
 _vm:
 	jmp _init
 	stack: dq 0,0,0,0,0,0,0,0
+	number: db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	done_str: db "done"
+	nl: db 0xd,0xa
+	space: db 0x20
 _init:
 	xor rbp,rbp
 	xor rax,rax
 	xor rdx,rdx
+%endmacro
+
+%macro done 0
+	show done_str,6
+%endmacro
+
+%macro eol 0
+	show nl,2
+%endmacro
+
+%macro sp 0
+	show space,1
+%endmacro
+
+%macro clear 2
+	mov rcx,%2		; max numbers
+.reset:
+	mov byte [ r13 + %1 + rcx - 1],0
+	loopnz .reset
+%endmacro
+
+%macro emit 0
+	mov r11,10		; radix
+	clear number,20		; clear buffer
+	mov rcx,20
+.emit:
+	xor rdx,rdx		; make sure we don't get junk
+	idiv r11		; divide by radix
+	add dl,48		; add ascii 0
+	mov byte [ r13 + number + rcx - 1 ],dl	; move to slot
+	test rax,rax		; if we've run out of data
+	jz .done		; quit
+	loopnz .emit		; otherwise do next loop
+.done:
+	show number,20		; null characters don't write!!!!
 %endmacro
 
 ; stack macros
