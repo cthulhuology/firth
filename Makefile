@@ -8,7 +8,7 @@ image.bin : image.asm syscall.asm
 
 image : image.bin
 	dd if=/dev/zero of=image bs=1048576 count=1
-	dd if=image.bin of=image conv=notrunc count=1
+	dd if=image.bin of=image bs=1048576 conv=notrunc count=1
 
 firth.o : firth.asm 
 	yasm -f macho64 firth.asm
