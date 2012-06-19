@@ -5,14 +5,7 @@ BITS 64
 
 section .text		; starts 0x100000000
 
-global mystart
-
-mystart:
-	mov rax, 0x2000004	; write
-	mov rdi, 1		; stdout
-	mov rsi, qword booting	; string
-	mov rdx, 19		; size
-	syscall
+global open_image
 
 open_image:
 	mov rax, 0x2000005	; open
@@ -55,18 +48,11 @@ fail:
 	syscall
 
 works:
-	mov rax, 0x2000004	; write syscall
-	mov rdi, 2		; stderr
-	mov rsi, qword worked	; string
-	mov rdx, 18		; length
-	syscall
 	jmp r13			; jump to image
 
 section .data			; 0x100001000
 
 error:	db "failed to load image!",0xa,0xd
-worked:	db "loading image...", 0xa,0xd
-booting: db 0xd,"booting firth...", 0xa,0xd
 image:	db "image", 0,90,90
 stats:	dq 0,0,			; starts at 0x40 from start of data segment
 	dq 0,0,
@@ -75,5 +61,4 @@ stats:	dq 0,0,			; starts at 0x40 from start of data segment
 	dq 0
 size:	dq 0,					; 0x100001088
 	dq 0,0,0,0,0,0,0,0,0,0,0,0,0		; 
-done:	db "done"
 
