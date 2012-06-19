@@ -1,6 +1,9 @@
-all : firth image
+all : firth image syscall.asm
 
-image.bin : image.asm
+syscall.asm :  /usr/include/sys/syscall.h
+	cat /usr/include/sys/syscall.h | grep -v "old " | grep "^#define" | sed 's%#define%\%define%' | sed 's%SYS_%%' | sed 's%$$% + 0x2000000%'   | tail -n +3 > syscall.asm
+
+image.bin : image.asm syscall.asm
 	yasm -f bin -o image.bin image.asm
 
 image : image.bin
@@ -15,4 +18,4 @@ firth : firth.o
 
 .PHONY: clean
 clean:
-	rm firth image *.o *.bin
+	rm firth image *.o *.bin syscall.asm
