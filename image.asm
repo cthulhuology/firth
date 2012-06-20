@@ -31,13 +31,19 @@ show_zero:
 	emit
 	eol
 
-done
-quit
+read_keys:
+	key
+	cmp rax,27
+	je .fin
+	type		; print ascii character
+	jmp read_keys
+
+.fin:
+	done
+	quit
 
 
 ;; Data Section
-
-running: db "running image!", 0xa, 0xd
 
 ; Data stack 8
 

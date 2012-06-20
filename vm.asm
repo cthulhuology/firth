@@ -6,6 +6,7 @@ _vm:
 	jmp _init
 	stack: dq 0,0,0,0,0,0,0,0
 	number: db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	tib: dq 0
 	done_str: db "done"
 	nl: db 0xd,0xa
 	space: db 0x20
@@ -48,6 +49,18 @@ _init:
 	loopnz .emit		; otherwise do next loop
 .done:
 	show number,20		; null characters don't write!!!!
+%endmacro
+
+%macro key 0
+	keys tib,1
+	offset tib
+	fetchc
+%endmacro
+
+%macro type 0
+	offset tib
+	storec
+	show tib,1
 %endmacro
 
 ; stack macros
