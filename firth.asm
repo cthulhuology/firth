@@ -5,10 +5,12 @@ BITS 64
 
 section .text		; starts 0x100000000
 
+%include "syscall.asm"
+
 global open_image
 
 open_image:
-	mov rax, 0x2000005	; open
+	mov rax, open		; 0x2000005 open
 	mov rdi, qword image	; "image"
 	mov rsi, 0x2		; RDWR
 	syscall
@@ -16,7 +18,7 @@ open_image:
 	mov r15, rax		; fd copy
 
 find_size:
-	mov rax, 0x20000bd	; fstat
+	mov rax, fstat		; 0x20000bd fstat
 	mov rdi, r15		; file descriptor
 	mov rsi, qword stats	; buffer address
 	syscall
@@ -24,7 +26,7 @@ find_size:
 	mov r14, [r13]		; save image size
 
 map_image:
-	mov rax, 0x20000c5	; mmap
+	mov rax, mmap		; 0x20000c5 mmap
 	mov rdi, 0x100003000	; addr
 	mov rsi, r14		; file size
 	mov rdx, 0x7		; READ0x1|WRITE0x2|EXEC0x4
@@ -39,12 +41,12 @@ boot:
 	jnz works
 
 fail:
-	mov rax, 0x2000004	; write
+	mov rax, write		; 0x2000004 write
 	mov rdi, 2		; stderr
 	mov rsi, qword error	; string
 	mov rdx, 23		; length
 	syscall
-	mov rax, 0x2000001	; exit
+	mov rax, exit		; 0x2000001 exit
 	syscall
 
 works:

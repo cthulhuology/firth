@@ -10,7 +10,7 @@ image : image.bin
 	dd if=/dev/zero of=image bs=1048576 count=1
 	dd if=image.bin of=image bs=1048576 conv=notrunc count=1
 
-firth.o : firth.asm 
+firth.o : firth.asm syscall.asm
 	yasm -f macho64 firth.asm
 
 firth : firth.o
