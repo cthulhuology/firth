@@ -21,29 +21,6 @@ ORG 0
 ; Initialize VM
 vm
 
-show_cafebabe:
-	literal 0xcafebabe
-	emit
-	sp
+clear
 
-show_zero:
-	literal 0
-	emit
-	eol
-
-read_keys:
-	key
-	cmp rax,27
-	je .fin
-	type		; print ascii character
-	jmp read_keys
-
-.fin:
-	done
-	quit
-
-
-;; Data Section
-
-; Data stack 8
-
+%include "term.asm"

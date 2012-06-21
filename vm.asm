@@ -10,6 +10,7 @@ _vm:
 	done_str: db "done"
 	nl: db 0xd,0xa
 	space: db 0x20
+	clr: db 27,99
 _init:
 	xor rbp,rbp
 	xor rax,rax
@@ -28,7 +29,11 @@ _init:
 	show space,1
 %endmacro
 
-%macro clear 2
+%macro clear 0
+	show clr,2
+%endmacro
+
+%macro zero 2
 	mov rcx,%2		; max numbers
 .reset:
 	mov byte [ r13 + %1 + rcx - 1],0
@@ -37,7 +42,7 @@ _init:
 
 %macro emit 0
 	mov r11,10		; radix
-	clear number,20		; clear buffer
+	zero number,20		; clear buffer
 	mov rcx,20
 .emit:
 	xor rdx,rdx		; make sure we don't get junk
