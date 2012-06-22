@@ -1,73 +1,44 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; VMMacros
+; rax top of stack / return value
+; rdx misc data, arg3 / 2nd return
+; rcx count, arg4
+; rbx object pointer			( preserved )  
+; rbp data stack pointer		( preserved )
+; rsp return stack pointer		( preserved )
+; rdi -- syscalls arg1
+; rsi -- syscalls arg2
+; r8  -- syscalls arg5
+; r9  -- syscalls arg6
+; r10 -- temp 
+; r11 -- temp
+; r12 free memory location		( preserved )
+; r13 image location			( preserved )
+; r14 image size			( preserved )
+; r15 file handle			( preserved )
 
 %macro vm 0
 _vm:
 	jmp _init
+	image_addr: dq 0
+	image_size: dq 0
+	image_fd: dq 0
+	free_addr: dq 0
 	stack: dq 0,0,0,0,0,0,0,0
-	number: db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-	tib: dq 0
-	done_str: db "done"
-	nl: db 0xd,0xa
-	space: db 0x20
-	clr: db 27,99
 _init:
+	mov [r13 + image_addr], r13	; Save addr
+	mov [r13 + image_size], r14	; Save size
+	mov [r13 + image_fd], r15	; Save file handle
+	mov r12, [r13 + free_addr ]	; load old free addr
+	test r12,r12
+	jnz .goon
+	lea r12,[__free_space]		; load free space pointer
+.goon:
 	xor rbp,rbp
 	xor rax,rax
 	xor rdx,rdx
+	xor r12,r12
 %endmacro
-
-%macro done 0
-	show done_str,6
-%endmacro
-
-%macro eol 0
-	show nl,2
-%endmacro
-
-%macro sp 0
-	show space,1
-%endmacro
-
-%macro clear 0
-	show clr,2
-%endmacro
-
-%macro zero 2
-	mov rcx,%2		; max numbers
-.reset:
-	mov byte [ r13 + %1 + rcx - 1],0
-	loopnz .reset
-%endmacro
-
-%macro emit 0
-	mov r11,10		; radix
-	zero number,20		; clear buffer
-	mov rcx,20
-.emit:
-	xor rdx,rdx		; make sure we don't get junk
-	idiv r11		; divide by radix
-	add dl,48		; add ascii 0
-	mov byte [ r13 + number + rcx - 1 ],dl	; move to slot
-	test rax,rax		; if we've run out of data
-	jz .done		; quit
-	loopnz .emit		; otherwise do next loop
-.done:
-	show number,20		; null characters don't write!!!!
-%endmacro
-
-%macro key 0
-	keys tib,1
-	offset tib
-	fetchc
-%endmacro
-
-%macro type 0
-	offset tib
-	storec
-	show tib,1
-%endmacro
-
 ; stack macros
 %define nos rbp*8+r13+stack
 
@@ -99,11 +70,41 @@ _init:
 
 ; Memory macros
 
-%macro fetch 0
+%macro zero 2				; equiv to memset(addr,len,zero)
+	mov rcx,%2			; bytes to zero out
+.reset:
+	mov byte [ r13 + %1 + rcx - 1],0
+	loopnz .reset
+%endmacro
+
+%macro alloc 0
+	mov rdx,r12			; squirrel away free address
+	add r12,rax			; update free pointer
+	mov rax,rdx			; return address we alloc'd
+	mov [r13+free_addr], r12	; save new offset
+%endmacro
+
+%macro allocnum 1
+	mov rax,r12			; return the free address
+	add r12, %1			; increment the free pointer
+	mov [r13+free_addr], r12	; save new offset
+%endmacro
+
+%macro fetchaddr 1			; fetch an address
+	dupe
+	mov rax, [ r13 + %1 ]
+%endmacro
+
+%macro fetch 0				; fetch address in tos
 	mov rax,[rax]
 %endmacro
 
-%macro store 0
+%macro storeaddr 1			; store tos to an address
+	mov [r13 + %1],rax
+	drop
+%endmacro
+
+%macro store 0				; store nos to address in tos
 	mov rdx,[nos]
 	mov [rax],rdx
 	nip
@@ -129,14 +130,26 @@ _init:
 	nip
 %endmacro
 
+%macro addnum 1
+	add rax, %1
+%endmacro
+
 %macro subtract 0
 	sub rax,[nos]
 	nip
 %endmacro
 
+%macro subnum 1
+	sub rax,%1
+%endmacro
+
 %macro multiply 0
 	imul rax,[nos]
 	nip
+%endmacro
+
+%macro mulnum 1
+	imul rax,%1
 %endmacro
 
 %macro divide 0
@@ -145,28 +158,45 @@ _init:
 	nip
 %endmacro
 
-%macro negate 0
+%macro divnum 1
+	xor rdx,rdx
+	idiv rax,%1
+%endmacro
+
+%macro negate 0			; twos compliment negation
 	neg rax
 %endmacro
 
 ; Logic Macros
 
-%macro intersect 0
+%macro intersect 0		; binary and tos and nos
 	and rax,[nos]
 	nip
 %endmacro
 
-%macro union 0
+%macro andnum 1			; binary and tos with literal
+	and rax,%1
+%endmacro
+
+%macro union 0			; binary or tos with nos
 	or rax,[nos]
 	nip
 %endmacro
 
-%macro exclusion 0
+%macro ornum 1			; binary or tos with literal
+	or rax,%1
+%endmacro
+
+%macro exclusion 0		; binary xor tos with now
 	xor rax,[nos]
 	nip
 %endmacro
 
-%macro compliment 0
+%macro xornum 1			; binary xor tos with literal
+	xor rax,%1
+%endmacro
+
+%macro compliment 0		; ones compliment negation
 	not rax
 %endmacro
 

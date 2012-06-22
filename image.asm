@@ -21,6 +21,11 @@ ORG 0
 ; Initialize VM
 vm
 
-clear
+call clear
+call read_keys
 
 %include "term.asm"
+
+
+__free_space:
+dq 90,90,90,90,90,90,90,90

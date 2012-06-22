@@ -1,14 +1,70 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Terminal Code
+;;
+
+done:
+	show done_str,6
+	ret
+
+eol:
+	show nl,2
+	ret
+
+space:
+	show wsp,1
+	ret
+
+clear:
+	show clr,2
+	ret
+
+emit:
+	mov r11,10		; radix
+	zero number,20		; clear buffer
+	mov rcx,20
+.emit:
+	xor rdx,rdx		; make sure we don't get junk
+	idiv r11		; divide by radix
+	add dl,48		; add ascii 0
+	mov byte [ r13 + number + rcx - 1 ],dl	; move to slot
+	test rax,rax		; if we've run out of data
+	jz .done		; quit
+	loopnz .emit		; otherwise do next loop
+.done:
+	show number,20		; null characters don't write!!!!
+	ret
+
+key:
+	keys tib,1
+	offset tib
+	fetchc
+	ret
+
+type:
+	offset tib
+	storec
+	show tib,1
+	ret
 
 read_keys:
-	key
+	call key
+	call term_pos
 	call term_quit
 	call term_red
 	call term_green
 	call term_normal
 	call term_return
 	call term_delete
-	type
+	call type
 	jmp read_keys
+
+term_pos:
+	cmp rax,20
+	jne term_pos_done
+	show position,4
+	call key			; dump esc
+	call emit
+term_pos_done:	ret
 
 term_quit:
 	cmp rax,17
@@ -25,7 +81,7 @@ term_red:
 .done:	ret
 
 term_green:
-	cmp rax,20
+	cmp rax,7
 	jne .done
 	show green,10
 	pop rdx
@@ -43,7 +99,7 @@ term_normal:
 term_return:
 	cmp rax,13
 	jne .done
-	eol
+	call eol
 	pop rdx
 	jmp read_keys
 .done:	ret
@@ -55,11 +111,19 @@ term_delete:
 .done:	ret
 
 # ANSI color codes and jazz
-plain: db 27,"[0;0;0m"
-red: db 27,"[0;31;40m"
-green: db 27,"[0;32;40m"
-yellow: db 27,"[0;33;40m"
-blue: db 27,"[0;34;40m"
-magenta: db 27,"[0;35;40m"
-cyan: db 27,"[0;36;40m"
-white: db 27,"[0;37;40m"
+terminal_data:
+	number: db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+	tib: dq 0
+	done_str: db "done"
+	nl: db 0xd,0xa
+	wsp: db 0x20
+	clr: db 27,99
+	plain: db 27,"[0;0;0m"
+	red: db 27,"[0;31;40m"
+	green: db 27,"[0;32;40m"
+	yellow: db 27,"[0;33;40m"
+	blue: db 27,"[0;34;40m"
+	magenta: db 27,"[0;35;40m"
+	cyan: db 27,"[0;36;40m"
+	white: db 27,"[0;37;40m"
+	position: db 27,"[6n"
