@@ -39,6 +39,7 @@ _init:
 	xor rdx,rdx
 	xor r12,r12
 %endmacro
+
 ; stack macros
 %define nos rbp*8+r13+stack
 

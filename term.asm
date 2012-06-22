@@ -2,6 +2,9 @@
 ;; Terminal Code
 ;;
 
+call clear
+call read_keys
+
 done:
 	show done_str,6
 	ret

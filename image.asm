@@ -21,9 +21,6 @@ ORG 0
 ; Initialize VM
 vm
 
-call clear
-call read_keys
-
 %include "term.asm"
 
 
