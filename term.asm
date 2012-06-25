@@ -38,9 +38,14 @@ emit:
 	ret
 
 key:
-	keys tib,1
-	offset tib
-	fetchc
+	mov r10,[r13+tibc]	; copy the count
+	lea r11,[r13+tib]	; get the input buffer
+	add r11,r10		; and offset into 
+	keys r11,1		; write stdin to tib
+	offset r11		; and fetch what we just wrote
+	fetchc			; leave the 
+	add r10,1		; increment count
+	mov [r13+tibc],r10	; and update
 	ret
 
 type:
@@ -116,7 +121,8 @@ term_delete:
 # ANSI color codes and jazz
 terminal_data:
 	number: db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-	tib: dq 0
+	tibc: dq 0
+	tib: dq 0,0,0,0,0
 	done_str: db "done"
 	nl: db 0xd,0xa
 	wsp: db 0x20

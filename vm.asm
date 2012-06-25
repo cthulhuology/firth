@@ -201,4 +201,40 @@ _init:
 	not rax
 %endmacro
 
+; Lexicon
+
+%macro lookup 0
+	dupe			; save old rax
+	mov r10,rbx		; load the current dictionary into r10
+.next:
+	mov r11,[r10]		; lookup the next address
+	mov rcx,[r10+8]		; load the length
+	lea rsi,[r10+16]	; load the string address
+	lea rdi,[r13+tib]	; load the input buffer address
+	repe cmpsb		; and test if equal	
+	jz .found		; we found it 
+	mov r10,r11		; otherwise we load the next
+	test r10,r10
+	jz .found		; we didn't actually find it here...
+	jmp .next		; but we can only do it again if >0
+.found:	
+	mov rax,r10		; return the value we found
+.done:
+%endmacro
+
+%macro define 0			; assuming tib
+	mov [r12],rbx
+	mov rbx,r12
+	mov rcx,[r13+tibc]	; load the count
+	mov [rbx+8],rcx		; and store it
+	lea rdi,[rbx+16]	; and setup a copy
+	lea rsi,[r13+tib]	; 
+	rep movsb		; copy into place
+	shr rcx,3		; we want to maintain a multiple of 8
+	add rcx,3		; 
+	shl rcx,3		;
+	add r12,rcx		; and update past the end, 8byte align
+	zero tib,40		; clear the input buffer
+	mov [r13+tibc],0	; clear the input buffer count
+%endmacro
 
