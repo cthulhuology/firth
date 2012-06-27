@@ -1,6 +1,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Terminal Code
 ;;
+;;	© 2012 David J Goehrig <dave@dloh.org>
+;;
 
 call clear
 call read_keys
@@ -37,6 +39,26 @@ emit:
 	show number,20		; null characters don't write!!!!
 	ret
 
+hexen:
+	mov r11,16
+	zero number,20
+	mov rcx,20
+.hexen:
+	xor rdx,rdx
+	idiv r11
+	cmp rdx,10
+	jl .lessthanten
+	add rdx,39	
+.lessthanten:
+	add rdx,48
+	mov byte [ r13 + number + rcx - 1],dl
+	test rax,rax
+	jz .done
+	loopnz .hexen
+.done:
+	show number,20
+	ret
+	
 key:
 	mov r10,[r13+tibc]	; copy the count
 	lea r11,[r13+tib]	; get the input buffer

@@ -2,7 +2,6 @@
 ;; image.asm
 ;;
 ;;	© 2012 David J. Goehrig
-;;	All Rights Reserved.
 ;;
 
 BITS 64
@@ -22,6 +21,7 @@ ORG 0
 vm
 
 %include "term.asm"
+
 
 
 __free_space:

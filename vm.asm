@@ -1,5 +1,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; VMMacros
+;;
+;;	© 2012 David J Goehrig
+;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Register Allocation 
+;
 ; rax top of stack / return value
 ; rdx misc data, arg3 / 2nd return
 ; rcx count, arg4
