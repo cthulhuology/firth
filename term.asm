@@ -4,6 +4,7 @@
 ;;	© 2012 David J Goehrig <dave@dloh.org>
 ;;
 
+
 call clear
 call read_keys
 
@@ -42,7 +43,7 @@ emit:
 hexen:
 	mov r11,16
 	zero number,20
-	mov rcx,20
+	mov rcx,16
 .hexen:
 	xor rdx,rdx
 	idiv r11
@@ -52,8 +53,7 @@ hexen:
 .lessthanten:
 	add rdx,48
 	mov byte [ r13 + number + rcx - 1],dl
-	test rax,rax
-	jz .done
+	test rcx,rcx
 	loopnz .hexen
 .done:
 	show number,20

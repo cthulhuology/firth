@@ -50,6 +50,16 @@ _init:
 ; stack macros
 %define nos rbp*8+r13+stack
 
+%macro rpush 0
+	push rax
+	drop
+%endmacro
+
+%macro rpop 0
+	dupe
+	pop rax
+%endmacro
+
 %macro dupe 0
 	add rbp,1
 	and rbp,7
@@ -77,6 +87,11 @@ _init:
 %endmacro
 
 ; Memory macros
+
+%macro object 0
+	mov rbx,rax
+	drop
+%endmacro
 
 %macro zero 2				; equiv to memset(addr,len,zero)
 	mov rcx,%2			; bytes to zero out
@@ -107,6 +122,12 @@ _init:
 	mov rax,[rax]
 %endmacro
 
+%macro fetchplus 0
+	dupe
+	mov rax,[rbx]
+	lea rbx,[rbx+8]
+%endmacro
+
 %macro storeaddr 1			; store tos to an address
 	mov [r13 + %1],rax
 	drop
@@ -129,6 +150,12 @@ _init:
 	mov rdx,[nos]
 	mov byte [rax],dl
 	nip
+	drop
+%endmacro
+
+%macro storeplus 0
+	mov [rbx],rax
+	lea rbx,[rbx+8]
 	drop
 %endmacro
 
