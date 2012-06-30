@@ -10,7 +10,7 @@
 ; rax top of stack / return value
 ; rdx misc data, arg3 / 2nd return
 ; rcx count, arg4
-; rbx object pointer			( preserved )  
+; rbx context pointer			( preserved )  
 ; rbp data stack pointer		( preserved )
 ; rsp return stack pointer		( preserved )
 ; rdi -- syscalls arg1
@@ -19,36 +19,61 @@
 ; r9  -- syscalls arg6
 ; r10 -- temp 
 ; r11 -- temp
-; r12 free memory location		( preserved )
+; r12 free address location		( preserved )
 ; r13 image location			( preserved )
-; r14 image size			( preserved )
-; r15 file handle			( preserved )
+; r14 image size / fetch pointer	( preserved )
+; r15 file handle / store pointer	( preserved )
 
 %macro vm 0
 _vm:
 	jmp _init
+	; VM header
 	image_addr: dq 0
 	image_size: dq 0
 	image_fd: dq 0
-	free_addr: dq 0
-	stack: dq 0,0,0,0,0,0,0,0
+
+	; Memory Segments
+	lexicon: dq 0		; [ r13 + lexicon ]
+	dictionary: dq 0	; [ r13 + dictionary ]
+	source: dq 0		; [ r13 + source ]
+	code: dq 0		; [ r13 + code ]
+
+	; Context
+	context prime
+		
 _init:
 	mov [r13 + image_addr], r13	; Save addr
 	mov [r13 + image_size], r14	; Save size
 	mov [r13 + image_fd], r15	; Save file handle
-	mov r12, [r13 + free_addr ]	; load old free addr
-	test r12,r12
-	jnz .goon
-	lea r12,[__free_space]		; load free space pointer
-.goon:
-	xor rbp,rbp
-	xor rax,rax
-	xor rdx,rdx
-	xor r12,r12
+	lea rbx, [ r13 + prime ]	; primary context
 %endmacro
 
+; Context macros
+
+%macro context 1
+%1:
+	.stack: dq  0,0,0,0,0,0,0,0
+	.registers: dq 0,0,0		; data, return, free	-- could expand to have a dictionary, source, and code per context
+%endmacro
+
+%macro switch 0
+	mov [rbx+64],rbp		; base pointer
+	mov [rbx+72],rsp		; return pointer
+	mov [rbx+80],r12		; heap pointer
+	mov rbx,rax			; switch contexts
+	mov rbp,[rbx+64]		; load base
+	mov rsp,[rbx+72]		; load return
+	mov r12,[rbx+80]		; load heap
+%endmacro
+
+%macro spawn 0	; allocate a new context
+
+
+%endmacro
+
+
 ; stack macros
-%define nos rbp*8+r13+stack
+%define nos rbp*8+rbx
 
 %macro rpush 0
 	push rax
@@ -88,11 +113,6 @@ _init:
 
 ; Memory macros
 
-%macro object 0
-	mov rbx,rax
-	drop
-%endmacro
-
 %macro zero 2				; equiv to memset(addr,len,zero)
 	mov rcx,%2			; bytes to zero out
 .reset:
@@ -101,16 +121,14 @@ _init:
 %endmacro
 
 %macro alloc 0
-	mov rdx,r12			; squirrel away free address
-	add r12,rax			; update free pointer
+	mov rdx,[r12]			; squirrel away free address
+	add [r12],rax			; update free pointer
 	mov rax,rdx			; return address we alloc'd
-	mov [r13+free_addr], r12	; save new offset
 %endmacro
 
 %macro allocnum 1
-	mov rax,r12			; return the free address
-	add r12, %1			; increment the free pointer
-	mov [r13+free_addr], r12	; save new offset
+	mov rax,[r12]			; return the free address
+	add [r12], %1			; increment the free pointer
 %endmacro
 
 %macro fetchaddr 1			; fetch an address
@@ -124,8 +142,18 @@ _init:
 
 %macro fetchplus 0
 	dupe
-	mov rax,[rbx]
-	lea rbx,[rbx+8]
+	mov rax,[r14]
+	lea r14,[r14+8]
+%endmacro
+
+%macro fetchc 0
+	xor rdx,rdx
+	mov dl, byte [rax]
+	xchg rax,rdx
+%endmacro
+
+%macro src 0
+	xchg r14,rax
 %endmacro
 
 %macro storeaddr 1			; store tos to an address
@@ -140,10 +168,10 @@ _init:
 	drop
 %endmacro
 
-%macro fetchc 0
-	xor rdx,rdx
-	mov dl, byte [rax]
-	xchg rax,rdx
+%macro storeplus 0
+	mov [r15],rax
+	lea r15,[r15+8]
+	drop
 %endmacro
 
 %macro storec 0
@@ -153,10 +181,8 @@ _init:
 	drop
 %endmacro
 
-%macro storeplus 0
-	mov [rbx],rax
-	lea rbx,[rbx+8]
-	drop
+%macro dest 0
+	xchg r15,rax
 %endmacro
 
 ; Math macros
@@ -235,16 +261,16 @@ _init:
 	not rax
 %endmacro
 
-; Lexicon
+; Lexicon searching, returns the word
 
-%macro lookup 0
+%macro lookup 0			; rax holds a counted string pointer
 	dupe			; save old rax
-	mov r10,rbx		; load the current dictionary into r10
+	mov r10,[r13+lexicon]	; load the current lexicon into r10
 .next:
 	mov r11,[r10]		; lookup the next address
 	mov rcx,[r10+8]		; load the length
 	lea rsi,[r10+16]	; load the string address
-	lea rdi,[r13+tib]	; load the input buffer address
+	lea rdi,rax		; load the input buffer address
 	repe cmpsb		; and test if equal	
 	jz .found		; we found it 
 	mov r10,r11		; otherwise we load the next
@@ -256,19 +282,49 @@ _init:
 .done:
 %endmacro
 
-%macro define 0			; assuming tib
-	mov [r12],rbx
-	mov rbx,r12
-	mov rcx,[r13+tibc]	; load the count
-	mov [rbx+8],rcx		; and store it
-	lea rdi,[rbx+16]	; and setup a copy
-	lea rsi,[r13+tib]	; 
+; A lexicon entry has the format:
+;
+;	dq next_word
+;	dq character count
+;	dq string...
+;
+; It is the counted string for each 
+
+%macro lex 0			; rax contains tib
+	mov r11,[r13+lexicon]	; lookup current lexicon address 
+	mov r10,[r11+8]		; load count
+	shr r10,3
+	add r10,3
+	shl r10,3		; cell boundary the count
+	lea r9,[r11+r10]	; load the address of the next word
+	mov [r9],r11		; save next pointer at free lexicon location
+	mov rcx,[rax]		; load the count 
+	mov [r9+8],rcx		; and store it
+	lea rdi,[r9+16]		; and setup a copy
+	lea rsi,[rax+8]		; load the tib into source
 	rep movsb		; copy into place
-	shr rcx,3		; we want to maintain a multiple of 8
-	add rcx,3		; 
-	shl rcx,3		;
-	add r12,rcx		; and update past the end, 8byte align
-	zero tib,40		; clear the input buffer
-	mov [r13+tibc],0	; clear the input buffer count
+	mov [r13+lexicon],r9	; save pointer to current word
 %endmacro
 
+; Definition binds a lexicon entry to a code address
+;
+;	dq word			- lexicon reference being defined
+;	dq source address	- source is stored as pointers to lexicon entries
+;	dq source words		- total number of words in this source listing
+;	dq code address		- address of compiled code
+;	dq code bytes		- number of bytes for the routine
+;
+
+%macro def 0
+
+
+%endmacro
+
+; Compilation
+;
+;
+
+%macro compile 0
+
+
+%endmacro

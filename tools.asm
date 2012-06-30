@@ -11,13 +11,13 @@
 jmp tools_end
 dump:			; address count dump
 	mov rcx,rax
-	mov rdx,0
+	xor rdx,rdx
 	drop
-	object
+	src
 .dump
 	fetchplus	; fetch data
 	push rcx	; save count
-	push rdx	; save citeration
+	push rdx	; save iteration
 	call hexen	; hexdump cell
 	call space	; then print a space
 	pop rdx
