@@ -212,6 +212,13 @@ rstack	equ 8*18	;
 	mov tos, %1
 %endmacro
 
+;; places the address of a static region of memory on the stack
+%macro offset 1
+	dupe
+	lea tos,[%1]			; load it as if zero based addr
+	shr tos,3			; divide by 8 to get cell addr
+%endmacro
+
 ;; places the address of a given memory cell into tos, cells start addressing from 0
 %macro cell 1
 	dupe
@@ -240,6 +247,7 @@ rstack	equ 8*18	;
 	mov tos,[bp + tos*8]		;
 %endmacro
 
+; -- cell
 %macro fetchplus 0
 	dupe
 	mov tos,[bp + src*8]		; fetch from src register
@@ -363,5 +371,40 @@ rstack	equ 8*18	;
 %macro shiftrnum 1		; shift right num
 	shr tos,%1
 %endmacro
+
+;; test / flow control 
+; b a -- b 0|b
+%macro equals 0
+	cmp rax,[nos]
+	je .cont
+	xor rax,rax
+.cont:	nop
+%endmacro
+
+; b a -- b 0|a
+%macro less 0
+	cmp rax,[nos]
+	jl .cont
+	xor rax,rax
+.cont:  nop
+%endmacro
+
+; b a -- b 0|a
+%macro more 0
+	cmp rax,[nos]
+	jg .cont
+	xor rax,rax
+.cont:  nop
+%endmacro
+
+; x addr -- x --> addr
+%macro if 0
+	rpush
+	test rax,rax	; if it is zero we don't jump
+	jz .cont
+	ret 
+.cont:	pop
+%endmacro
+
 
 
