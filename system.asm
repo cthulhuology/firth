@@ -6,42 +6,49 @@
 
 %include "syscall.asm"
 
-%macro show 2
-	mov rax, write ; 0x2000004 write
-	mov rdi, 1			; stderr
-	lea rsi, [ r13 + %1 ]		; string 
-	mov rdx, %2			; length
-	syscall
+; displays the counted string on the top of the stack
+; len str -- len
+%macro show 0	
+	arg2
+	arg3
+	literal 1
+	arg1
+	literal write
+	os
 %endmacro
 
-%macro putc 1
-	mov rax,write
-	mov rdi,1
-	lea rsi, [ %1 ]
-	mov rdx,1
-	syscall
+; key -- 
+%macro type 0
+	dupe
+	stack		; nos address
+	arg2
+	literal 1	; stdout
+	arg1
+	literal 1	; 1 byte
+	arg3
+	literal write
+	os
+	drop
 %endmacro
 
+; --
 %macro quit 0
-	mov rax, exit ; 0x2000001 exit
-	mov edi, 0			; return value
-	syscall
+	literal 0
+	arg1
+	literal exit ; 0x2000001 exit
+	os
 %endmacro
 
-%macro print 0
-	mov rsi,rax
-	mov rdx,[nos]
-	nip
-	mov rax, write
-	mov rdi, 1
-	syscall
-%endmacro
-
-%macro keys 2
-	mov rax, read		; 0x
-	mov rdi, 0		; stdin
-	lea rsi, [ %1 ]		; buffer
-	mov rdx, %2		; count
-	syscall			; rax carries count
+; -- key
+%macro key 0
+	stack			; nos pointer
+	arg2
+	literal 1
+	arg3			; read 1 byte
+	literal 0		; stdin
+	arg1
+	literal read
+	os
+	drop
 %endmacro
 

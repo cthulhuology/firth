@@ -56,7 +56,7 @@ _init:
 %endmacro
 
 ;; Defines a machine state relative to a context poitner
-data	equ 0		; data stack
+dstack	equ 0		; data stack
 res_ip	equ 8*8		; saved instruction pointer
 res_cp	equ 8*9		; context pointer
 res_fp	equ 8*10	; free poitner
@@ -67,8 +67,7 @@ res_tos	equ 8*14	; top of data stack
 res_nos	equ 8*15	; next on stack 
 res_src	equ 8*16	; memory source address pointer
 res_dst	equ 8*17	; memory destination address pointer
-retn	equ 8*18	;
-%endmacro
+rstack	equ 8*18	;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Context macros
@@ -115,8 +114,8 @@ retn	equ 8*18	;
 
 ;; Creates initializes a new context at a given address
 %macro spawn 0	
-	mov cp,tos		; load the context pointer in the top of the stack
-	lea rp,[cp+retn]	; loads the return stack pointer
+	lea cp,[bp + tos*8]	; load the context pointer in the top of the stack
+;	lea rp,[cp+rstack]	; loads the return stack pointer
 	lea fp,[cp+0x4000]	; free page is 1 page of memory above context
 	xor dp,dp		; data stack pointer is 0, aka cp + 0
 	xor tos,tos		; clear the rest of the pointers etc
@@ -200,6 +199,11 @@ retn	equ 8*18	;
 %macro drop 0
 	mov tos,[nos]
 	nip
+%endmacro
+
+;; places the address of the next on the stack into the top of the stack
+%macro stack 0
+	lea tos,[nos]
 %endmacro
 
 ;; Places a literal value in tos
