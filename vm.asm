@@ -212,6 +212,12 @@ rstack	equ 8*18	;
 	mov tos, %1
 %endmacro
 
+;; Places the address of a code point in tos
+%macro method 1
+	dupe
+	lea tos,[bp+%1]
+%endmacro
+
 ;; places the address of a static region of memory on the stack
 %macro offset 1
 	dupe
@@ -403,8 +409,11 @@ rstack	equ 8*18	;
 	test rax,rax	; if it is zero we don't jump
 	jz .cont
 	ret 
-.cont:	pop
+.cont:	pop tmp1	; discard return address on return stack
 %endmacro
 
+%macro invoke 0
+
+%endmacro
 
 

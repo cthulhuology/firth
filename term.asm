@@ -5,8 +5,21 @@
 ;;
 
 call clear
-call done
-quit
+call term
+
+term:
+	key
+	call test_quit
+	method done
+	if
+	drop
+	type
+	jmp term
+
+test_quit:
+	literal 17
+	equals
+	ret
 
 done:
 	offset done_str		; done_str -> tos
@@ -20,7 +33,7 @@ done:
 	fetchplus
 	type
 	call eol
-	source
+	quit
 	ret
 
 eol:
