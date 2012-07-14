@@ -14,6 +14,14 @@
 	syscall
 %endmacro
 
+%macro putc 1
+	mov rax,write
+	mov rdi,1
+	lea rsi, [ %1 ]
+	mov rdx,1
+	syscall
+%endmacro
+
 %macro quit 0
 	mov rax, exit ; 0x2000001 exit
 	mov edi, 0			; return value
@@ -32,7 +40,7 @@
 %macro keys 2
 	mov rax, read		; 0x
 	mov rdi, 0		; stdin
-	lea rsi, [ r13 + %1 ]	; buffer
+	lea rsi, [ %1 ]		; buffer
 	mov rdx, %2		; count
 	syscall			; rax carries count
 %endmacro

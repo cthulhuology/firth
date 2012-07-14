@@ -24,307 +24,340 @@
 ; r14 image size / fetch pointer	( preserved )
 ; r15 file handle / store pointer	( preserved )
 
+; register machine
+%define ip	rip		; instruction pointer
+%define cp	rbx		; context pointer
+%define fp	r12		; free pointer
+%define bp	r13 		; base pointer
+%define dp	rbp		; data stack pointer
+%define rp	rsp		; return stack pointer
+%define tos	rax		; top of data stack
+%define nos	rbp*8+rbx	; next on data stack
+%define src	r14		; source address register
+%define dst	r15		; destination address register
+%define tmp1	r10		; temporary register
+%define tmp2	r11		; temporary register
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; VM Image Definition
 %macro vm 0
 _vm:
 	jmp _init
 	; VM header
 	image_addr: dq 0
 	image_size: dq 0
-	image_fd: dq 0
-
-	; Memory Segments
-	lexicon: dq 0		; [ r13 + lexicon ]
-	dictionary: dq 0	; [ r13 + dictionary ]
-	source: dq 0		; [ r13 + source ]
-	code: dq 0		; [ r13 + code ]
-
-	; Context
-	context prime
-		
+	image_fd:   dq 0
 _init:
-	mov [r13 + image_addr], r13	; Save addr
-	mov [r13 + image_size], r14	; Save size
-	mov [r13 + image_fd], r15	; Save file handle
-	lea rbx, [ r13 + prime ]	; primary context
+	mov [bp + image_addr], r13	; Save addr
+	mov [bp + image_size], r14	; Save size
+	mov [bp + image_fd], r15	; Save file handle
+	mov tos, 0x1000			; Load the base context
+	spawn
 %endmacro
 
-; Context macros
-
-%macro context 1
-%1:
-	.stack: dq  0,0,0,0,0,0,0,0
-	.registers: dq 0,0,0		; data, return, free	-- could expand to have a dictionary, source, and code per context
+;; Defines a machine state relative to a context poitner
+data	equ 0		; data stack
+res_ip	equ 8*8		; saved instruction pointer
+res_cp	equ 8*9		; context pointer
+res_fp	equ 8*10	; free poitner
+res_bp	equ 8*11	; base memory pointer
+res_dp	equ 8*12	; data stack pointer
+res_rp	equ 8*13	; return stack pointer
+res_tos	equ 8*14	; top of data stack
+res_nos	equ 8*15	; next on stack 
+res_src	equ 8*16	; memory source address pointer
+res_dst	equ 8*17	; memory destination address pointer
+retn	equ 8*18	;
 %endmacro
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Context macros
+
+;; Saves the machine's context so that it may safely exit
+%macro save 0
+	lea tmp1, [cp + .endstop]
+	mov [cp + res_ip], tmp1
+	mov [cp + res_cp], cp
+	mov [cp + res_fp], fp
+	mov [cp + res_bp], bp
+	mov [cp + res_dp], dp
+	mov [cp + res_rp], rp
+	mov [cp + res_tos], tos
+	mov [cp + res_nos], nos
+	mov [cp + res_src], src
+	mov [cp + res_dst], dst
+.endstop:
+%endmacro
+
+;; Resume loads the previously save register state into the machine registers
+%macro resume 0
+	mov bp, [cp + res_bp]
+	mov dst, [cp + res_dst]
+	mov src, [cp + res_src]
+	mov nos, [cp + res_nos]
+	mov tos, [cp + res_tos]
+	mov rp, [cp + res_rp]
+	mov dp, [cp + res_dp]
+	mov fp, [cp + res_fp]
+	mov tmp1, [cp + res_ip]
+	push tmp1			; we restore the instruction pointer by returning to it
+	ret
+%endmacro
+
+;; Switch swaps one context pointer for another
 %macro switch 0
-	mov [rbx+64],rbp		; base pointer
-	mov [rbx+72],rsp		; return pointer
-	mov [rbx+80],r12		; heap pointer
-	mov rbx,rax			; switch contexts
-	mov rbp,[rbx+64]		; load base
-	mov rsp,[rbx+72]		; load return
-	mov r12,[rbx+80]		; load heap
+	mov [cp+64],dp		; base pointer
+	mov [cp+72],rp		; return pointer
+	mov cp,tos		; switch contexts
+	mov dp,[cp+64]		; load stack
+	mov rp,[cp+72]		; load return
 %endmacro
 
-%macro spawn 0	; allocate a new context
-
-
+;; Creates initializes a new context at a given address
+%macro spawn 0	
+	mov cp,tos		; load the context pointer in the top of the stack
+	lea rp,[cp+retn]	; loads the return stack pointer
+	lea fp,[cp+0x4000]	; free page is 1 page of memory above context
+	xor dp,dp		; data stack pointer is 0, aka cp + 0
+	xor tos,tos		; clear the rest of the pointers etc
+	xor src,src
+	xor dst,dst
 %endmacro
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; System Functions Interface
 
-; stack macros
-%define nos rbp*8+rbx
-
-%macro rpush 0
-	push rax
+;; loads OS C ABI arg1
+%macro arg1 0
+	mov rdi,tos
 	drop
 %endmacro
 
+;; loads OS C ABI arg2
+%macro arg2 0
+	mov rsi,tos
+	drop
+%endmacro
+
+;; loads OS C ABI arg3
+%macro arg3 0
+	mov rdx,tos
+	drop
+%endmacro
+
+;; loads OS C ABI arg4
+%macro arg4 0
+	mov rcx,tos
+	drop
+%endmacro
+
+;; loads OS C ABI arg5
+%macro arg5 0
+	mov r8,tos
+	drop
+%endmacro
+
+;; loads OS C ABI arg6
+%macro arg6 0
+	mov r9,tos
+	drop
+%endmacro
+
+;; Makes an operating system call
+%macro os 0
+	syscall
+%endmacro
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Stack functions
+
+;; moves the top of the data stack to the top of the return stack
+%macro rpush 0
+	push tos
+	drop
+%endmacro
+
+;; move top of the return stack to the top of the data stack
 %macro rpop 0
 	dupe
-	pop rax
+	pop tos
 %endmacro
 
+;; places tos in nos and pushes rest of the stack down
 %macro dupe 0
-	add rbp,1
-	and rbp,7
-	mov [nos],rax
+	add dp,1
+	and dp,7
+	mov [nos],tos
 %endmacro
 
+;; drops the next on the data stack
 %macro nip 0
-	add rbp,-1
-	and rbp,7
+	add dp,-1
+	and dp,7
 %endmacro
 
+;; removes top of the stack fetches the next on stack
 %macro drop 0
-	mov rax,[nos]
+	mov tos,[nos]
 	nip
 %endmacro
 
+;; Places a literal value in tos
 %macro literal 1
 	dupe
-	mov rax, %1
+	mov tos, %1
 %endmacro
 
-%macro offset 1
+;; places the address of a given memory cell into tos, cells start addressing from 0
+%macro cell 1
 	dupe
-	lea rax, [ r13 + %1 ]
+	lea tos, [bp + %1*8]
 %endmacro
 
 ; Memory macros
 
-%macro zero 2				; equiv to memset(addr,len,zero)
-	mov rcx,%2			; bytes to zero out
-.reset:
-	mov byte [ r13 + %1 + rcx - 1],0
-	loopnz .reset
-%endmacro
-
 %macro alloc 0
-	mov rdx,[r12]			; squirrel away free address
-	add [r12],rax			; update free pointer
-	mov rax,rdx			; return address we alloc'd
+	mov tmp1,fp			; squirrel away free address
+	lea fp,[fp + tos*8]		; update free pointer allocating tos cells
+	mov tos,tmp1			; return address we alloc'd
 %endmacro
 
 %macro allocnum 1
-	mov rax,[r12]			; return the free address
-	add [r12], %1			; increment the free pointer
+	mov tos,fp			; return the free address
+	lea fp,[fp + %1*8]		; update by fixed num cells
 %endmacro
 
 %macro fetchaddr 1			; fetch an address
 	dupe
-	mov rax, [ r13 + %1 ]
+	mov tos,[bp + %1*8]		; cell based addressing
 %endmacro
 
 %macro fetch 0				; fetch address in tos
-	mov rax,[rax]
+	mov tos,[bp + tos*8]		;
 %endmacro
 
 %macro fetchplus 0
 	dupe
-	mov rax,[r14]
-	lea r14,[r14+8]
+	mov tos,[bp + src*8]		; fetch from src register
+	add src,1			; increment src register
 %endmacro
 
-%macro fetchc 0
-	xor rdx,rdx
-	mov dl, byte [rax]
-	xchg rax,rdx
-%endmacro
-
-%macro src 0
-	xchg r14,rax
+%macro source 0				; swaps the src and top of stack
+	xchg src,tos
 %endmacro
 
 %macro storeaddr 1			; store tos to an address
-	mov [r13 + %1],rax
+	mov [bp + %1*8],tos	
 	drop
 %endmacro
 
 %macro store 0				; store nos to address in tos
-	mov rdx,[nos]
-	mov [rax],rdx
+	mov tmp1,[nos]
+	mov [bp + tos*8],tmp1		; store to a cell address
 	nip
-	drop
+	drop				; remove two elements from stack
 %endmacro
 
 %macro storeplus 0
-	mov [r15],rax
-	lea r15,[r15+8]
-	drop
-%endmacro
-
-%macro storec 0
-	mov rdx,[nos]
-	mov byte [rax],dl
-	nip
+	mov [bp+ dst*8],tos		; store top of stack to memory address
+	add dst,1			; increment meory addr
 	drop
 %endmacro
 
 %macro dest 0
-	xchg r15,rax
+	xchg dst,tos			; swap destination and top of stack
 %endmacro
 
 ; Math macros
 %macro addition 0
-	add rax,[nos]
+	add tos,[nos]
 	nip
 %endmacro
 
 %macro addnum 1
-	add rax, %1
+	add tos, %1
 %endmacro
 
 %macro subtract 0
-	sub rax,[nos]
+	sub tos,[nos]
 	nip
 %endmacro
 
 %macro subnum 1
-	sub rax,%1
+	sub tos,%1
 %endmacro
 
 %macro multiply 0
-	imul rax,[nos]
+	imul tos,[nos]
 	nip
 %endmacro
 
 %macro mulnum 1
-	imul rax,%1
+	imul tos,%1
 %endmacro
 
 %macro divide 0
 	xor rdx,rdx
-	idiv rax,[nos]
+	idiv tos,[nos]
 	nip
 %endmacro
 
 %macro divnum 1
 	xor rdx,rdx
-	idiv rax,%1
+	idiv tos,%1
 %endmacro
 
 %macro negate 0			; twos compliment negation
-	neg rax
+	neg tos
 %endmacro
 
 ; Logic Macros
 
 %macro intersect 0		; binary and tos and nos
-	and rax,[nos]
+	and tos,[nos]
 	nip
 %endmacro
 
 %macro andnum 1			; binary and tos with literal
-	and rax,%1
+	and tos,%1
 %endmacro
 
 %macro union 0			; binary or tos with nos
-	or rax,[nos]
+	or tos,[nos]
 	nip
 %endmacro
 
 %macro ornum 1			; binary or tos with literal
-	or rax,%1
+	or tos,%1
 %endmacro
 
 %macro exclusion 0		; binary xor tos with now
-	xor rax,[nos]
+	xor tos,[nos]
 	nip
 %endmacro
 
 %macro xornum 1			; binary xor tos with literal
-	xor rax,%1
+	xor tos,%1
 %endmacro
 
 %macro compliment 0		; ones compliment negation
-	not rax
+	not tos
 %endmacro
 
-; Lexicon searching, returns the word
-
-%macro lookup 0			; rax holds a counted string pointer
-	dupe			; save old rax
-	mov r10,[r13+lexicon]	; load the current lexicon into r10
-.next:
-	mov r11,[r10]		; lookup the next address
-	mov rcx,[r10+8]		; load the length
-	lea rsi,[r10+16]	; load the string address
-	lea rdi,rax		; load the input buffer address
-	repe cmpsb		; and test if equal	
-	jz .found		; we found it 
-	mov r10,r11		; otherwise we load the next
-	test r10,r10
-	jz .found		; we didn't actually find it here...
-	jmp .next		; but we can only do it again if >0
-.found:	
-	mov rax,r10		; return the value we found
-.done:
+%macro shiftl 0			; shift left 1
+	shl tos,1
 %endmacro
 
-; A lexicon entry has the format:
-;
-;	dq next_word
-;	dq character count
-;	dq string...
-;
-; It is the counted string for each 
-
-%macro lex 0			; rax contains tib
-	mov r11,[r13+lexicon]	; lookup current lexicon address 
-	mov r10,[r11+8]		; load count
-	shr r10,3
-	add r10,3
-	shl r10,3		; cell boundary the count
-	lea r9,[r11+r10]	; load the address of the next word
-	mov [r9],r11		; save next pointer at free lexicon location
-	mov rcx,[rax]		; load the count 
-	mov [r9+8],rcx		; and store it
-	lea rdi,[r9+16]		; and setup a copy
-	lea rsi,[rax+8]		; load the tib into source
-	rep movsb		; copy into place
-	mov [r13+lexicon],r9	; save pointer to current word
+%macro shiftlnum 1		; shift left num
+	shl tos,%1
 %endmacro
 
-; Definition binds a lexicon entry to a code address
-;
-;	dq word			- lexicon reference being defined
-;	dq source address	- source is stored as pointers to lexicon entries
-;	dq source words		- total number of words in this source listing
-;	dq code address		- address of compiled code
-;	dq code bytes		- number of bytes for the routine
-;
-
-%macro def 0
-
-
+%macro shiftr 0			; shift right 1
+	shr tos,1
 %endmacro
 
-; Compilation
-;
-;
-
-%macro compile 0
-
-
+%macro shiftrnum 1		; shift right num
+	shr tos,%1
 %endmacro
+
+

@@ -1,4 +1,4 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Terminal Code
 ;;
 ;;	© 2012 David J Goehrig <dave@dloh.org>
@@ -22,6 +22,8 @@ space:
 
 clear:
 	show clr,2
+	call tib
+	mov qword [rax],0	; clear the tib 
 	ret
 
 emit:
@@ -58,26 +60,70 @@ hexen:
 .done:
 	show number,20
 	ret
-	
-key:
-	mov r10,[r13+tibc]	; copy the count
-	lea r11,[r13+tib]	; get the input buffer
-	add r11,r10		; and offset into 
-	keys r11,1		; write stdin to tib
-	offset r11		; and fetch what we just wrote
-	fetchc			; leave the 
-	add r10,1		; increment count
-	mov [r13+tibc],r10	; and update
+
+tib:
+	dupe
+	lea r11,[r13+lexicon]	; get the address of the top word
+	mov r10,[r11+8]		; grab the count
+	shr r10,3
+	add r10,3
+	shl r10,3		; get the aligned after the count
+	lea rax,[r11+r10]	; get the address of the free word
 	ret
 
+tibc:
+	call tib
+	mov rax,[rax]		; load the count
+	ret
+
+tibcplus:
+	call tib
+	add qword [rax],1
+	drop
+	ret
+
+tibfree:
+	call tib		; base offset
+	call tibc		; count
+	addition		; +
+	addnum 8		; skip the count 
+	ret
+
+key:
+	call tibfree		; get the free address in tos
+	dupe
+	dupe
+	call hexen
+	call space
+	drop
+	mov r11,rax		; keys overwrites rax
+	keys r11,1		; write stdin to tibfree
+	drop
+	fetchc
+	jmp tibcplus		; increment the tibc count
+
 type:
-	offset tib
-	storec
-	show tib,1
+	call tibfree
+	subnum 1
+	mov r11,rax
+	putc r11
+	call space
 	ret
 
 read_keys:
+	lea rax,[r13+end_of_lexicon]
+	call hexen
+	call space
+	lea rax,[r13+lexicon]
+	call hexen
+	call space
+	drop
 	call key
+	dupe
+	call hexen
+	call space
+	drop
+	drop
 	call term_pos
 	call term_quit
 	call term_red
@@ -143,8 +189,8 @@ term_delete:
 # ANSI color codes and jazz
 terminal_data:
 	number: db 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-	tibc: dq 0
-	tib: dq 0,0,0,0,0
+	tibcnt: dq 0
+	tibbuf: dq 0,0,0,0,0
 	done_str: db "done"
 	nl: db 0xd,0xa
 	wsp: db 0x20
