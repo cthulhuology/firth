@@ -286,6 +286,16 @@ rstack	equ 8*18	;
 	xchg dst,tos			; swap destination and top of stack
 %endmacro
 
+%macro destfetch 0
+	dupe
+	mov tos,[dst]
+%endmacro
+
+%macro sourcestore 0
+	mov [src],tos
+	drop
+%endmacro
+
 ; Math macros
 %macro addition 0
 	add tos,[nos]
@@ -322,7 +332,8 @@ rstack	equ 8*18	;
 
 %macro divnum 1
 	xor rdx,rdx
-	idiv tos,%1
+	mov tmp1,%1
+	idiv tos,tmp1
 %endmacro
 
 %macro negate 0			; twos compliment negation
@@ -363,7 +374,9 @@ rstack	equ 8*18	;
 %endmacro
 
 %macro shiftl 0			; shift left 1
-	shl tos,1
+	mov rcx,[nos]
+	shl tos,cl
+	nip
 %endmacro
 
 %macro shiftlnum 1		; shift left num
@@ -371,7 +384,9 @@ rstack	equ 8*18	;
 %endmacro
 
 %macro shiftr 0			; shift right 1
-	shr tos,1
+	mov rcx,[nos]
+	shr tos,cl
+	nip
 %endmacro
 
 %macro shiftrnum 1		; shift right num
@@ -382,9 +397,19 @@ rstack	equ 8*18	;
 ; b a -- b 0|b
 %macro equals 0
 	cmp rax,[nos]
-	je .cont
+	je .econt
 	xor rax,rax
-.cont:	nop
+.econt:	nop
+%endmacro
+
+%macro zero 0
+	dupe
+	test rax,rax
+	jnz .zcont
+	not rax		; rax is not zero
+	jmp .zdone
+.zcont: xor rax,rax	; rax is 0
+.zdone: nop
 %endmacro
 
 ; b a -- b 0|a
@@ -417,6 +442,14 @@ rstack	equ 8*18	;
 %macro invoke 0
 	rpush
 	ret
+%endmacro
+
+%macro continue 0
+	test rax,rax
+	jz .cntcnt
+	drop
+	ret
+.cntcnt: drop
 %endmacro
 
 

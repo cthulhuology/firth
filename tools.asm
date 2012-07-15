@@ -1,9 +1,8 @@
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; tools.asm
 ;;
 ;; © 2012 David J Göhrig
 ;;
-;;
-
 
 octal:		
 	dupe		; a -- a a
@@ -49,5 +48,44 @@ first_digit:
 second_digit:
 	addnum 87
 	type
+	ret
+
+dump:
+	dupe
+	rpush		; byte 0
+	dupe
+	shiftrnum 8
+	rpush		; byte 1
+	dupe
+	shiftrnum 16
+	rpush		; byte 2
+	dupe
+	shiftrnum 24
+	rpush		; byte 3
+	dupe
+	shiftrnum 32
+	rpush		; byte 4
+	dupe
+	shiftrnum 40
+	rpush		; byte 5
+	dupe
+	shiftrnum 48
+	rpush		; byte 6
+	shiftrnum 56
+	call hexen	; byte 7
+	rpop
+	call hexen	; byte 6
+	rpop
+	call hexen	; byte 5
+	rpop
+	call hexen	; byte 4
+	rpop
+	call hexen	; byte 3
+	rpop
+	call hexen	; byte 2
+	rpop
+	call hexen	; byte 1
+	rpop
+	call hexen	; byte 0
 	ret
 

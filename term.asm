@@ -4,15 +4,62 @@
 ;;	© 2012 David J Goehrig <dave@dloh.org>
 ;;
 
+
 call clear
 call term
+; we never get here
 
+%include "screen.asm"
+%include "tools.asm"
+
+; this is the key input display loop
 term:
 	key
 	call test_quit
 	call test_retn
-	type
-	jmp term
+	call test_backspace
+	call update
+	method draw		; draw co-routine
+	invoke			; will return
+
+charshift: ; key count --
+	zero	
+	continue	; return if 0
+	rpush		; save count
+	shiftlnum 8	; move over once
+	rpop		; restore count
+	subnum 1
+	method charshift
+	invoke		; loop
+
+align 16
+update:	; key -- 
+	call cursor
+	fetch		; key -- key addr
+	andnum 7	; key -- key addr&7
+	call charshift	; move character over tos times
+	drop
+	call cursor
+	fetch		; cursor address
+	shiftrnum 3	; cell oriented address
+	fetch		; cursor contents
+	orb		; shifted key, cursor contents  -- new contents
+	call cursor
+	fetch		; new contents, cursor address
+	shiftrnum 3	; to cell oriented address
+	store
+	call cursor
+	fetch
+	addnum 1
+	call cursor
+	store
+	ret
+	
+cursor:
+	offset _cursor
+	ret
+align 16
+_cursor: dq 8000
 
 test_quit:
 	literal 17
@@ -24,8 +71,23 @@ test_quit:
 test_retn:
 	literal 13
 	equals
-	method nl
+	method linefeed
 	if
+	ret
+
+linefeed:
+	call cursor
+	fetch
+	divnum 144
+	addnum 1
+	mulnum 144
+	call cursor
+	store
+	method draw
+	invoke
+
+test_backspace:
+
 	ret
 
 done:
