@@ -19,15 +19,16 @@
 
 ; key -- 
 %macro type 0
-	dupe
-	stack		; nos address
-	arg2
-	literal 1	; stdout
-	arg1
-	literal 1	; 1 byte
-	arg3
-	literal write
-	os
+	dupe		; key -- key key
+	stack		; nos address	key -- key stack
+	arg2		; key stack -- key
+	literal 1	; key -- key stdout 
+	arg1		; key -- key
+	literal 1	; key -- key 1 byte
+	arg3		; key 1 -- key
+	literal write	; key -- key write
+	os		; key -- key count
+	drop		; key -- key
 	drop
 %endmacro
 

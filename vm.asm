@@ -331,7 +331,7 @@ rstack	equ 8*18	;
 
 ; Logic Macros
 
-%macro intersect 0		; binary and tos and nos
+%macro andb 0			; binary and tos and nos
 	and tos,[nos]
 	nip
 %endmacro
@@ -340,7 +340,7 @@ rstack	equ 8*18	;
 	and tos,%1
 %endmacro
 
-%macro union 0			; binary or tos with nos
+%macro orb 0			; binary or tos with nos
 	or tos,[nos]
 	nip
 %endmacro
@@ -349,7 +349,7 @@ rstack	equ 8*18	;
 	or tos,%1
 %endmacro
 
-%macro exclusion 0		; binary xor tos with now
+%macro xorb 0			; binary xor tos with now
 	xor tos,[nos]
 	nip
 %endmacro
@@ -358,7 +358,7 @@ rstack	equ 8*18	;
 	xor tos,%1
 %endmacro
 
-%macro compliment 0		; ones compliment negation
+%macro notb 0			; ones compliment negation
 	not tos
 %endmacro
 
@@ -389,31 +389,34 @@ rstack	equ 8*18	;
 
 ; b a -- b 0|a
 %macro less 0
-	cmp rax,[nos]
-	jl .cont
+	cmp [nos],rax
+	jl .lcont
 	xor rax,rax
-.cont:  nop
+.lcont:  nop
 %endmacro
 
 ; b a -- b 0|a
 %macro more 0
-	cmp rax,[nos]
-	jg .cont
+	cmp [nos],rax
+	jg .gcont
 	xor rax,rax
-.cont:  nop
+.gcont:  nop
 %endmacro
 
 ; x addr -- x --> addr
 %macro if 0
 	rpush
 	test rax,rax	; if it is zero we don't jump
-	jz .cont
+	jz .ifcnt
+	drop
 	ret 
-.cont:	pop tmp1	; discard return address on return stack
+.ifcnt:	pop tos		; discard return address on return stack
+	drop
 %endmacro
 
 %macro invoke 0
-
+	rpush
+	ret
 %endmacro
 
 
