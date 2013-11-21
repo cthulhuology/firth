@@ -115,7 +115,7 @@ rstack	equ 8*18	;
 ;; Creates initializes a new context at a given address
 %macro spawn 0	
 	lea cp,[bp + tos*8]	; load the context pointer in the top of the stack
-;	lea rp,[cp+rstack]	; loads the return stack pointer
+	lea rp,[cp+rstack]	; loads the return stack pointer
 	lea fp,[cp+0x4000]	; free page is 1 page of memory above context
 	xor dp,dp		; data stack pointer is 0, aka cp + 0
 	xor tos,tos		; clear the rest of the pointers etc

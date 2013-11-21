@@ -1,4 +1,4 @@
-; firth.asm - boot loader for a firth image
+m; firth.asm - boot loader for a firth image
 ;
 ; © 2012 David J Goehrig <dave@dloh.org>
 ;
@@ -32,15 +32,16 @@ map_image:
 	mov rdi, 0x100003000	; addr
 	mov rsi, r14		; file size
 	mov rdx, 0x7		; READ0x1|WRITE0x2|EXEC0x4
-	mov rcx, 0x111		; NO_EXTEND0x100|SHARED0x01|FILE0x00| 0x10 FIXED 0x111 (1802 ANON JIT PRIVATE)
-	; mov r8, fd
+	mov r10, 0x111		; NO_EXTEND0x100|SHARED0x01|FILE0x00| 0x10 FIXED 0x111 0x800 JIT (1802 ANON JIT PRIVATE)
+	mov r8, 3 
 	mov r9,0		; offset 0
+; lo2p:	jmp lo2p
 	syscall
 	mov r13,rax		; image address
 
 boot:
-	test r13,r13		; test image mmap result (0 means we failed)
-	jnz works
+	cmp rdi,rax		; test image mmap result doesn't equal rdi we failed
+	je works
 
 fail:
 	mov rax, write		; 0x2000004 write
@@ -52,17 +53,19 @@ fail:
 	syscall
 
 works:
-	jmp r13			; jump to image
+	jmp rax			; jump to image
 
 section .data			; 0x100001000
 
 error:	db "failed to load image!",0xa,0xd
+worked: db "it loaded image", 0xa, 0xd
 image:	db "image", 0,90,90
 stats:	dq 0,0,			; starts at 0x40 from start of data segment
 	dq 0,0,
 	dq 0,0,
 	dq 0,0,
-	dq 0
-size:	dq 0,					; 0x100001088
+	dq 0,
+size:	dq 0,0,
+	dq 0,0,
 	dq 0,0,0,0,0,0,0,0,0,0,0,0,0		; 
-
+	dq 0,0,0,0,0,0,0,0,0,0,0,0,0		; 

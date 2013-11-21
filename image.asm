@@ -5,14 +5,23 @@
 ;;
 
 BITS 64
-ORG 0
-
+ORG 0x100003000	
 ;; Include core macro files
 %include "vm.asm"
 %include "system.asm"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Initialize VM
-vm
-%include "term.asm"
-quit
+
+mov rax, write		; 0x2000004 write
+mov rdi, 2		; stderr
+mov rsi, qword inimage	; string
+mov rdx, 18		; length
+syscall
+
+;;vm
+;;%include "term.asm"
+mov rax,exit
+syscall
+
+inimage: db "in the image now", 0xa, 0xd
