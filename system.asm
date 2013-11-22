@@ -1,5 +1,5 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; System Maros for Mac OS X
+;; System Macros for Mac OS X
 ;;
 ;;	© 2012 David J Goehrig <dave@dloh.org>
 ;;

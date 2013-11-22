@@ -9,7 +9,7 @@
 ;
 ; rax top of stack / return value
 ; rdx misc data, arg3 / 2nd return
-; rcx count, arg4
+; rcx count
 ; rbx context pointer			( preserved )  
 ; rbp data stack pointer		( preserved )
 ; rsp return stack pointer		( preserved )
@@ -17,7 +17,7 @@
 ; rsi -- syscalls arg2
 ; r8  -- syscalls arg5
 ; r9  -- syscalls arg6
-; r10 -- temp 
+; r10 -- syscalls arg4 
 ; r11 -- temp
 ; r12 free address location		( preserved )
 ; r13 image location			( preserved )
@@ -43,6 +43,12 @@
 %macro vm 0
 _vm:
 	jmp _init
+	nop
+	nop
+	nop
+	nop
+	nop
+	nop
 	; VM header
 	image_addr: dq 0
 	image_size: dq 0
@@ -51,7 +57,7 @@ _init:
 	mov [bp + image_addr], r13	; Save addr
 	mov [bp + image_size], r14	; Save size
 	mov [bp + image_fd], r15	; Save file handle
-	mov tos, 0x1000			; Load the base context
+	mov tos, 0x1000
 	spawn
 %endmacro
 
@@ -114,11 +120,11 @@ rstack	equ 8*18	;
 
 ;; Creates initializes a new context at a given address
 %macro spawn 0	
-	lea cp,[bp + tos*8]	; load the context pointer in the top of the stack
-;	lea rp,[cp+rstack]	; loads the return stack pointer
-	lea fp,[cp+0x4000]	; free page is 1 page of memory above context
-	xor dp,dp		; data stack pointer is 0, aka cp + 0
-	xor tos,tos		; clear the rest of the pointers etc
+	lea cp,[bp + tos*8]		; load the context pointer in the top of the stack
+	lea rp,[cp + tos*8 + 0x1000]	; loads the return stack pointer
+	lea fp,[cp + tos*8 + 0x2000]	; free page is 2 pages of memory above context
+	xor dp,dp			; data stack pointer is 0, aka cp + 0
+	xor tos,tos			; clear the rest of the pointers etc
 	xor src,src
 	xor dst,dst
 %endmacro
@@ -146,7 +152,7 @@ rstack	equ 8*18	;
 
 ;; loads OS C ABI arg4
 %macro arg4 0
-	mov rcx,tos
+	mov r10,tos
 	drop
 %endmacro
 
@@ -217,6 +223,13 @@ rstack	equ 8*18	;
 	dupe
 	lea tos,[bp+%1]
 %endmacro
+
+;; Locates literal data pointer
+%macro data 1
+	dupe
+	lea tos,[bp+%1]
+%endmacro
+
 
 ;; places the address of a static region of memory on the stack
 %macro offset 1

@@ -9,18 +9,17 @@ call clear
 call term
 ; we never get here
 
-%include "screen.asm"
+;%include "screen.asm"
 %include "tools.asm"
 
 ; this is the key input display loop
 term:
 	key
 	call test_quit
-	call test_retn
-	call test_backspace
-	call update
-	method draw		; draw co-routine
-	invoke			; will return
+;	call test_retn
+;	call test_backspace
+;	call update
+	jmp term		; will return
 
 charshift: ; key count --
 	zero	
@@ -83,14 +82,15 @@ linefeed:
 	mulnum 144
 	call cursor
 	store
-	method draw
-	invoke
+	ret
 
 test_backspace:
 
 	ret
 
-done:
+xdone:
+	jmp done
+	;; never get here
 	offset done_str		; done_str -> tos
 	fetch			; [done_str] -> tos
 	dupe
