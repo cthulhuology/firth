@@ -43,14 +43,14 @@
 %macro vm 0
 _vm:
 	jmp _init
-	nop
+	nop			; allocating some extra space for future 
 	nop
 	nop
 	nop
 	nop
 	nop
 	; VM header
-	image_addr: dq 0
+	image_addr: dq 0	; 0x
 	image_size: dq 0
 	image_fd:   dq 0
 _init:
@@ -58,7 +58,17 @@ _init:
 	mov [bp + image_size], r14	; Save size
 	mov [bp + image_fd], r15	; Save file handle
 	mov tos, 0x1000
-	spawn
+	spawn				; create a new context
+	save
+	literal 0x01deadbeef
+	literal 0x02deadbeef
+	literal 0x03deadbeef
+	literal 0x04deadbeef
+	literal 0x05cafebabe
+	literal 0x06cafebabe
+	literal 0x07cafebabe
+	literal 0x08cafebabe
+	literal 0x09feedface
 %endmacro
 
 ;; Defines a machine state relative to a context poitner
@@ -70,28 +80,26 @@ res_bp	equ 8*11	; base memory pointer
 res_dp	equ 8*12	; data stack pointer
 res_rp	equ 8*13	; return stack pointer
 res_tos	equ 8*14	; top of data stack
-res_nos	equ 8*15	; next on stack 
-res_src	equ 8*16	; memory source address pointer
-res_dst	equ 8*17	; memory destination address pointer
-rstack	equ 8*18	;
+res_src	equ 8*15	; memory source address pointer
+res_dst	equ 8*16	; memory destination address pointer
+rstack	equ 8*17	;
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Context macros
 
 ;; Saves the machine's context so that it may safely exit
 %macro save 0
-	lea tmp1, [cp + .endstop]
-	mov [cp + res_ip], tmp1
-	mov [cp + res_cp], cp
+	lea tmp1, [bp + .endstop]
+	mov [cp + res_ip], tmp1		; this is past the data stack 
+	mov [cp + res_cp], cp		; at the bottom or the return stack
 	mov [cp + res_fp], fp
 	mov [cp + res_bp], bp
 	mov [cp + res_dp], dp
 	mov [cp + res_rp], rp
 	mov [cp + res_tos], tos
-	mov [cp + res_nos], nos
 	mov [cp + res_src], src
 	mov [cp + res_dst], dst
-.endstop:
+.endstop: nop
 %endmacro
 
 ;; Resume loads the previously save register state into the machine registers
@@ -99,7 +107,6 @@ rstack	equ 8*18	;
 	mov bp, [cp + res_bp]
 	mov dst, [cp + res_dst]
 	mov src, [cp + res_src]
-	mov nos, [cp + res_nos]
 	mov tos, [cp + res_tos]
 	mov rp, [cp + res_rp]
 	mov dp, [cp + res_dp]
@@ -118,11 +125,11 @@ rstack	equ 8*18	;
 	mov rp,[cp+72]		; load return
 %endmacro
 
-;; Creates initializes a new context at a given address
+;; Creates initializes a new context at a given address, 8 pages 32k
 %macro spawn 0	
 	lea cp,[bp + tos*8]		; load the context pointer in the top of the stack
-	lea rp,[cp + tos*8 + 0x1000]	; loads the return stack pointer
-	lea fp,[cp + tos*8 + 0x2000]	; free page is 2 pages of memory above context
+	lea rp,[cp + 0x0ff8]		; loads the return stack pointer
+	lea fp,[cp + 0x1000]		; free page memory above return stack
 	xor dp,dp			; data stack pointer is 0, aka cp + 0
 	xor tos,tos			; clear the rest of the pointers etc
 	xor src,src
@@ -465,4 +472,7 @@ rstack	equ 8*18	;
 .cntcnt: drop
 %endmacro
 
+%macro forever 0
+	jmp $$
+%endmacro
 

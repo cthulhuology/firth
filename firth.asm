@@ -5,7 +5,9 @@
 
 BITS 64
 
-section .text		; starts 0x100000000
+section .text			; starts 0x100000000
+
+image_start equ	0x100003000	; image loaded 3 pages higher
 
 %include "syscall.asm"
 
@@ -29,7 +31,7 @@ find_size:
 
 map_image:
 	mov rax, mmap		; 0x20000c5 mmap
-	mov rdi, 0x100003000	; addr
+	mov rdi, image_start	; image addr
 	mov rsi, r14		; file size
 	mov rdx, 0x7		; READ0x1|WRITE0x2|EXEC0x4
 	mov r10, 0x111		; NO_EXTEND0x100|SHARED0x01|FILE0x00| 0x10 FIXED 0x111 (1802 ANON JIT PRIVATE)

@@ -15,10 +15,20 @@ ORG 0
 ; Initialize VM
 vm
 
-literal 18
-data message 
-show
+method .wait
+invoke
 
-quit
+nop
+nop
+
+.wait:
+	literal 18
+	data message 
+	show
+
+;.loop
+;	method .loop
+;	invoke
+	resume
 
 message: db "running in image",0xa,0xd
