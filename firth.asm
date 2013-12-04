@@ -1,6 +1,6 @@
 ; firth.asm - boot loader for a firth image
 ;
-; © 2012 David J Goehrig <dave@dloh.org>
+; © 2012,2013 David J Goehrig <dave@dloh.org>
 ;
 
 BITS 64

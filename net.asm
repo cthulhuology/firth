@@ -1,4 +1,7 @@
-
+; net.asm
+; 
+; © 2013 David J. Goehrig <dave@dloh.org>
+;
 
 %macro tcp 0
 	literal 1
