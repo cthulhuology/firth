@@ -1,18 +1,27 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; net.asm
-; 
-; © 2013 David J. Goehrig <dave@dloh.org>
-;
+;; net.asm
+;; 
+;; © 2013 David J. Goehrig <dave@dloh.org>
+;;
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; tcp selects a SOCK_STREAM
 
 %macro tcp 0
 	literal 1
 	arg2
 %endmacro
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; udp selects a SOCK_DGRAM
+
 %macro udp 0 
 	literal 2
 	arg2
 %endmacro
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; creates a socket and leave fd on top of stack
 
 %macro create_socket 0
 	literal 2		; PF_INET
@@ -20,6 +29,9 @@
 	literal socket		; socket syscall
 	os			; fd on tos
 %endmacro
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; flags the socket address as reuseable, use before socket_bind
 
 %macro reuse_addr 0
 	jmp .skip		; give us an int to work with inline
@@ -36,6 +48,9 @@
 	literal setsockopt	; setsockopt syscall
 	os
 %endmacro			; tos 0 if successful
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; binds a socket to a given address, assumes IPv4
 	
 %macro bind_socket 0	
 	literal 16		; sizeof sockaddr
@@ -46,6 +61,9 @@
 	os
 %endmacro			; tos 0 if successful
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; activates a inbound socket connection on the bound port, 255 connections max
+
 %macro listen_socket 0
 	literal 255		; backlog
 	arg2
@@ -53,6 +71,9 @@
 	literal listen
 	os
 %endmacro
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; connects the socket to the remote address
 
 %macro connect_socket 0
 	literal 16		; sizeof sockaddr
@@ -62,6 +83,9 @@
 	literal connect		
 	os
 %endmacro
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; sends data to a socket, use for udp
 
 %macro send_to_socket 0
 	literal 16
@@ -75,6 +99,9 @@
 	literal sendto
 	os
 %endmacro
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; receive data from a socket, use for udp
 
 %macro recv_from_socket 0
 	jmp .skip
@@ -91,6 +118,9 @@
 	os
 %endmacro
 		
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; sends data to a bound socket, currently doesn't support OOB
+
 %macro send_socket 0
 	literal 0
 	arg4
@@ -100,6 +130,9 @@
 	literal send
 	os
 %endmacro
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; receives data from a bound socket, currently doesn't support OOB
 
 %macro recv_socket 0
 	literal 0
@@ -111,6 +144,9 @@
 	os
 %endmacro
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; write data to a socket (or fd)
+
 %macro write_socket 0
 	arg3			; length tos
 	arg2			; buffer nos
@@ -119,6 +155,9 @@
 	os
 %endmacro	
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; read data from a socket (or fd)
+
 %macro read_socket 0
 	arg3			; length tos
 	arg2			; buffer nos
@@ -126,6 +165,9 @@
 	literal read
 	os
 %endmacro
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; shutdown methods shutdown ro, wo, or r/w
 
 %macro _shutdown 0
 	arg1 			; fd
