@@ -26,7 +26,7 @@ find_size:
 	mov rdi, r15		; file descriptor
 	mov rsi, qword stats	; buffer address
 	syscall
-	mov r13, qword size	; size of image file
+	mov r13, qword image_size	; size of image file
 	mov r14, [r13]		; save image size
 
 map_image:
@@ -34,7 +34,11 @@ map_image:
 	mov rdi, image_start	; image addr
 	mov rsi, r14		; file size
 	mov rdx, 0x7		; READ0x1|WRITE0x2|EXEC0x4
-	mov r10, 0x111		; NO_EXTEND0x100|SHARED0x01|FILE0x00| 0x10 FIXED 0x111 (1802 ANON JIT PRIVATE)
+%ifdef MACOSX
+	mov r10, 0x111		; NO_EXTEND0x100|SHARED0x01|FILE0x00| 0x10 FIXED 0x111
+%else
+	mov r10, 0x011		; Linux SHARED0x01|FILE0x00| 0x10 FIXED 0x11
+%endif
 	; mov r8, fd
 	mov r9,0		; offset 0
 	syscall
@@ -63,8 +67,10 @@ image:	db "image", 0,90,90
 stats:	dq 0,0,			; starts at 0x40 from start of data segment
 	dq 0,0,
 	dq 0,0,
-	dq 0,0,
+%ifdef MACOSX
+	dq 0,0,	 		; linux is 24 sooner
 	dq 0
-size:	dq 0,					; 0x100001088
+%endif
+image_size:	dq 0,					; 0x100001088
 	dq 0,0,0,0,0,0,0,0,0,0,0,0,0		; 
 
