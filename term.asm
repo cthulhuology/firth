@@ -9,62 +9,30 @@ call clear
 call term
 ; we never get here
 
-;%include "screen.asm"
 %include "tools.asm"
 
 ; this is the key input display loop
 term:
 	key
+	dupe
+	type
 	call test_quit
-;	call test_retn
-;	call test_backspace
-;	call update
+	call test_retn
+	call test_backspace
+	call test_plain
+	call test_red
+	call test_green
 	jmp term		; will return
 
-charshift: ; key count --
-	zero	
-	continue	; return if 0
-	rpush		; save count
-	shiftlnum 8	; move over once
-	rpop		; restore count
-	subnum 1
-	method charshift
-	invoke		; loop
-
-align 16
-update:	; key -- 
-	call cursor
-	fetch		; key -- key addr
-	andnum 7	; key -- key addr&7
-	call charshift	; move character over tos times
-	drop
-	call cursor
-	fetch		; cursor address
-	shiftrnum 3	; cell oriented address
-	fetch		; cursor contents
-	orb		; shifted key, cursor contents  -- new contents
-	call cursor
-	fetch		; new contents, cursor address
-	shiftrnum 3	; to cell oriented address
-	store
-	call cursor
-	fetch
-	addnum 1
-	call cursor
-	store
-	ret
-	
-cursor:
-	offset _cursor
-	ret
-align 16
-_cursor: dq 8000
-
 test_quit:
-	literal 17
+	literal 17	; ctrl-q
 	equals
 	method done
 	if
+	ret
+
+done:
+	quit
 	ret
 
 test_retn:
@@ -75,36 +43,24 @@ test_retn:
 	ret
 
 linefeed:
-	call cursor
-	fetch
-	divnum 144
-	addnum 1
-	mulnum 144
-	call cursor
-	store
+	literal 10
+	type
 	ret
 
 test_backspace:
-
+	literal 127		; delete key
+	equals
+	method backspace
+	if
 	ret
 
-xdone:
-	jmp done
-	;; never get here
-	offset done_str		; done_str -> tos
-	fetch			; [done_str] -> tos
-	dupe
+backspace:
+	literal 8
 	type
-	shiftrnum 8
-	dupe
+	literal 32
 	type
-	shiftrnum 8
-	dupe
+	literal 8
 	type
-	shiftrnum 8		; don't dupe after so type consumes
-	type
-	call eol
-	quit
 	ret
 
 nl:	
@@ -131,16 +87,52 @@ clear:
 	type
 	ret
 
+test_green;
+	literal 7
+	equals
+	method green_text
+	if
+	ret
+
+green_text:
+	data green_str
+	cshow
+	ret
+
+test_red:
+	literal 18
+	equals
+	method red_text
+	if
+	ret
+
+red_text:
+	data red_str
+	cshow
+	ret
+
+test_plain:
+	literal 16
+	equals
+	method plain_text
+	if
+	ret
+
+plain_text:
+	data plain_str
+	cshow
+	ret
+
 ; ANSI color codes and jazz
 align 8
 terminal_data:
 	done_str: db "done",0,0,0,0
 align 8
-	plain_str: db 27,"[0;0;0m"
+	plain_str: db 8,27,"[0;0;0m"
 align 8
-	red_str: db 27,"[0;31;40m"
+	red_str: db 10,27,"[0;31;40m"
 align 8
-	green_str: db 27,"[0;32;40m"
+	green_str: db 10,27,"[0;32;40m"
 align 8
 	yellow_str: db 27,"[0;33;40m"
 align 8

@@ -17,6 +17,22 @@
 	os
 %endmacro
 
+; displays a counted string  ( addr -- written )
+%macro cshow 0
+	dupe
+	fetch
+	andnum 0xff	; low byte	
+	arg3		; count
+	addnum 1
+	arg2		; addr + 1
+	literal 1 
+	arg1
+	literal write
+.loop:
+	jmp .loop
+	os	
+%endmacro
+
 ; key -- 
 %macro type 0
 	dupe		; key -- key key

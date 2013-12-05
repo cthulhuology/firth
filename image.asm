@@ -15,7 +15,9 @@ ORG 0
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Initialize VM
 vm
+%include "term.asm"
 
+;; never get here
 method .demo
 invoke
 
