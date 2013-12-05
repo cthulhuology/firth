@@ -264,6 +264,10 @@ rstack	equ 8*17	;
 	lea fp,[fp + %1*8]		; update by fixed num cells
 %endmacro
 
+%macro fetchraw 0
+	mov tos,[tos]			; absolute addressing
+%endmacro
+
 %macro fetchaddr 1			; fetch an address
 	dupe
 	mov tos,[bp + %1*8]		; cell based addressing
