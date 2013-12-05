@@ -1,7 +1,7 @@
 all : firth image syscall.asm
 
 syscall.asm :  /usr/include/sys/syscall.h
-	cat /usr/include/asm/unistd_64.h | grep -v "old " | grep "^#define" | sed 's%#define%\%define%' | sed 's%__NR_%%' | tail -n +3 > syscall.asm
+	cat /usr/include/asm/unistd_64.h | grep -v "old " | grep "^#define" | sed 's%#define%\%define%' | sed 's%__NR_%%' | tail -n +2 > syscall.asm
 
 image.bin : image.asm syscall.asm vm.asm term.asm tools.asm
 	yasm -m amd64 -f bin -o image.bin image.asm

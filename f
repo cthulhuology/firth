@@ -1,5 +1,5 @@
 clear
 STTY=$(stty -g)
-stty raw
+stty raw -echo
 ./firth
 stty "$STTY"
