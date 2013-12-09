@@ -35,7 +35,7 @@ map_image:
 	mov rdi, image_start	; image addr
 	mov rsi, r14		; file size
 	mov rdx, 0x7		; READ0x1|WRITE0x2|EXEC0x4
-%ifdef MACOSX
+%ifdef Darwin
 	mov r10, 0x111		; NO_EXTEND0x100|SHARED0x01|FILE0x00| 0x10 FIXED 0x111
 %else
 	mov r10, 0x011		; Linux SHARED0x01|FILE0x00| 0x10 FIXED 0x11
@@ -68,7 +68,7 @@ image:	db "image", 0,90,90
 stats:	dq 0,0,			; starts at 0x40 from start of data segment
 	dq 0,0,
 	dq 0,0,
-%ifdef MACOSX
+%ifdef Darwin
 	dq 0,0,	 		; linux is 24 sooner
 	dq 0
 %endif

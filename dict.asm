@@ -1,24 +1,15 @@
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; dict.asm
-;;
-;; 
-
-%macro def 1 ; word
-def_%1:
-%endmacro
-
-%macro end 1 ;  word
-end_%1:	
-	ret
-%endmacro
-
-%macro dict 2 ; word
-%strlen _len %2
-align 8
-word_%1:
-dq def_%1		; definition address
-dq end_%1 - def_%1	; definition length
-dq _len			; word length
-db %2 			; word
-
-%endmacro
+dict boot,'boot'
+dict arg1,'arg1'
+dict arg2,'arg2'
+dict arg3,'arg3'
+dict arg4,'arg4'
+dict arg5,'arg5'
+dict arg6,'arg6'
+dict os,'os'
+dict push,'push'
+dict pop,'pop'
+dict dupe,'dupe'
+dict nip,'nip'
+dict drop,'drop'
+dict stack,'stack'
+dict alloc,'alloc'

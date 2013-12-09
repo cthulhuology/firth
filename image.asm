@@ -9,7 +9,6 @@ ORG 0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Include core macro files
-%include "dict.asm"
 %include "vm.asm"
 %include "system.asm"
 %include "net.asm"
@@ -68,9 +67,9 @@ def pop
 rpop
 end pop
 
-def dup
+def dupe
 dupe
-end dup
+end dupe
 
 def nip
 nip
@@ -100,20 +99,4 @@ end alloc
 ;; The dictionary
 
 dictionary:
-
-; Initial boot routine
-dict boot,'boot'
-dict arg1,'arg1'
-dict arg2,'arg2'
-dict arg3,'arg3'
-dict arg4,'arg4'
-dict arg5,'arg5'
-dict arg6,'arg6'
-dict os,'os'
-dict push,'push'
-dict pop,'pop'
-dict dup,'dup'
-dict nip,'nip'
-dict drop,'drop'
-dict stack,'stack'
-dict alloc,'alloc'
+%include "dict.asm"

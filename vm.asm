@@ -39,6 +39,32 @@
 %define tmp2	r11		; temporary register
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Define bits of the dictionary
+
+; define a word (in code)
+%macro def 1 ; word
+def_%1:
+%endmacro
+
+; end a definition (in code)
+%macro end 1 ;  word
+end_%1:	
+	ret
+%endmacro
+
+; create a dictionary entry (in data)
+%macro dict 2 ; word
+%strlen _len %2
+align 8
+word_%1:
+dq def_%1		; definition address
+dq end_%1 - def_%1	; definition length
+dq _len			; word length
+db %2 			; word
+align 8, db 0
+%endmacro
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; VM Image Definition
 %macro vm 0
 _vm:
