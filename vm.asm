@@ -42,7 +42,8 @@
 ;; Define bits of the dictionary
 
 ; define a word (in code)
-%macro def 1 ; word
+
+%macro definition 1 ; word
 def_%1:
 %endmacro
 
@@ -50,6 +51,12 @@ def_%1:
 %macro end 1 ;  word
 end_%1:	
 	ret
+%endmacro
+
+%macro def 1 ; word
+definition %1
+%1
+end %1
 %endmacro
 
 ; create a dictionary entry (in data)
@@ -336,13 +343,13 @@ rstack	equ 8*17	;
 	xchg dst,tos			; swap destination and top of stack
 %endmacro
 
-%macro destfetch 0
+%macro deststore 0
 	dupe
-	mov tos,[dst]
+	mov [dst],tos
 %endmacro
 
-%macro sourcestore 0
-	mov [src],tos
+%macro sourcefetch 0
+	mov tos,[src]
 	drop
 %endmacro
 
@@ -376,7 +383,8 @@ rstack	equ 8*17	;
 
 %macro divide 0
 	xor rdx,rdx
-	idiv tos,[nos]
+	mov r11,[nos]
+	idiv tos,r11
 	nip
 %endmacro
 
