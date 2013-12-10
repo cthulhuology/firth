@@ -286,6 +286,16 @@ rstack	equ 8*17	;
 
 ; Memory macros
 
+%macro free 0
+	xchg tos,fp			; swaps the free pointer with tos
+%endmacro
+
+%macro compile 0
+	mov [fp],tos			; copies tos to the next free address
+	drop				; drops the tos
+	lea fp,[fp+8]			; advances the free pointer
+%endmacro
+
 %macro alloc 0
 	mov tmp1,fp			; squirrel away free address
 	lea fp,[fp + tos*8]		; update free pointer allocating tos cells
@@ -514,3 +524,23 @@ rstack	equ 8*17	;
 	jmp $$
 %endmacro
 
+; words
+%macro create 0		; create a dictionary entry
+
+%endmacro
+
+%macro 
+
+; variables
+
+%macro variable 0
+		
+%endmacro 
+
+%macro constant 0
+
+%endmacro
+
+%macro value 0
+
+%endmacro

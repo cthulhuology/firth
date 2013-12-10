@@ -48,6 +48,8 @@ def stack
 
 ;; Memory Functions
 
+def free
+def compile
 def alloc
 def fetch
 def fetchplus
