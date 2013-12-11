@@ -525,11 +525,26 @@ rstack	equ 8*17	;
 %endmacro
 
 ; words
-%macro create 0		; create a dictionary entry
-
+%macro create 0		; create a dictionary entry ( c-addr u a-addr u -- )
+	lea r11, [dictionary_free + bp]		; load dictionary free pointer
+	swap
+	mov [r11], tos				; save definition address
+	lea r11, [r11 + 8]	
+	drop
+	mov [r11], tos				; save definition length
+	lea r11, [r11 + 8]	
+	drop
+	mov rcx, tos				; copy count
+	mov [r11], tos				; save string length
+	lea r11, [r11 + 8]	
+	drop
+	mov rdi, r11
+	mov rsi, tos
+	rep movsb				; copy string
+	add r11,7
+	and r11, ~7				; align r11
+	mov [dictionary_free +bp], r11		; update dictionary free pointer
 %endmacro
-
-%macro 
 
 ; variables
 

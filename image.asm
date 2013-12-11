@@ -86,10 +86,13 @@ def invoke
 def continue
 def forever
 
+; dictionary
+def create
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constants, Variables, and Values
 
-
+dictionary_free: dq dictionary_end
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -97,3 +100,4 @@ def forever
 
 dictionary:
 %include "dict.asm"
+dictionary_end: dq 0
