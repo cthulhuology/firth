@@ -393,8 +393,8 @@ rstack	equ 8*17	;
 
 %macro divide 0
 	xor rdx,rdx
-	mov r11,[nos]
-	idiv tos,r11
+	mov tmp1,[nos]
+	idiv tos,tmp1
 	nip
 %endmacro
 
@@ -524,38 +524,4 @@ rstack	equ 8*17	;
 	jmp $$
 %endmacro
 
-; words
-%macro create 0		; create a dictionary entry ( c-addr u a-addr u -- )
-	lea r11, [dictionary_free + bp]		; load dictionary free pointer
-	swap
-	mov [r11], tos				; save definition address
-	lea r11, [r11 + 8]	
-	drop
-	mov [r11], tos				; save definition length
-	lea r11, [r11 + 8]	
-	drop
-	mov rcx, tos				; copy count
-	mov [r11], tos				; save string length
-	lea r11, [r11 + 8]	
-	drop
-	mov rdi, r11
-	mov rsi, tos
-	rep movsb				; copy string
-	add r11,7
-	and r11, ~7				; align r11
-	mov [dictionary_free +bp], r11		; update dictionary free pointer
-%endmacro
 
-; variables
-
-%macro variable 0
-		
-%endmacro 
-
-%macro constant 0
-
-%endmacro
-
-%macro value 0
-
-%endmacro

@@ -92,12 +92,14 @@ def create
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Constants, Variables, and Values
 
-dictionary_free: dq dictionary_end
+;dictionary_last: dq word_create		;; last word in dict.asm
+;dictionary_free: dq dictionary_end
+
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The dictionary
 
 dictionary:
-%include "dict.asm"
+;; %include "dict.asm"
 dictionary_end: dq 0

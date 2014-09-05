@@ -1,3 +1,4 @@
+; create a dictionary entry (in data)
 dict boot,'boot'
 dict arg1,'#1'
 dict arg2,'#2'
